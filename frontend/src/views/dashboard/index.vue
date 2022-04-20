@@ -7,17 +7,6 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { getresource } from '@/api/resource'
-getresource({
-  'colume': [], // 空的话代表所有字段
-  'page': 1,
-  'size': 10,
-  'sort': '', // 空为不排序
-  'desc': true,
-  'condition': {
-
-  }
-})
 export default {
   name: 'Dashboard',
   computed: {
