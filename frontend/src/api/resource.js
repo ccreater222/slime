@@ -16,3 +16,33 @@ export function getresource(data) {
     data
   })
 }
+export function updateresource(data) {
+  return request({
+    url: '/api/update/resource',
+    method: 'post',
+    data
+  })
+}
+export function createresource(data) {
+  return request({
+    url: '/api/create/resource',
+    method: 'post',
+    data: {
+      data
+    }
+  })
+}
+export function deleteresource(data) {
+  return request({
+    url: '/api/delete/resource',
+    method: 'post',
+    data
+  })
+}
+export function analyzeresource(data) {
+  return request({
+    url: '/api/analyze/resource',
+    method: 'post',
+    data
+  })
+}

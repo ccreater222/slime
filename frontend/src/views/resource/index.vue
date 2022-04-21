@@ -4,7 +4,7 @@
     <div class="filter-container">
       <el-row :gutter="20" justify="center">
         <el-col v-for="col in defaultFormThead" :key="col" :span="2">
-          <el-input v-model="listQuery[col]" :placeholder="col" prefix-icon="el-icon-search" class="filter-item" @keyup.enter.native="handleFilter" />
+          <el-input v-model="listQuery[col]" :placeholder="col" prefix-icon="el-icon-search" class="filter-item" @input="handleFilter" />
         </el-col>
         <el-col :span="2">
           <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
@@ -21,24 +21,30 @@
       <el-button class="filter-item" style="margin-right: 10px;" type="primary" icon="el-icon-edit" @click="handleEdit">
         修改
       </el-button>
-      <el-button class="filter-item" style="margin-right: 10px;" type="primary" icon="el-icon-delete" @click="handleCreate">
+      <el-button class="filter-item" style="margin-right: 10px;" type="primary" icon="el-icon-delete" @click="handleDelete">
         删除
       </el-button>
-      <el-button class="filter-item" style="margin-right: 10px;" type="primary" icon="el-icon-odometer" @click="handleCreate">
+      <el-button class="filter-item" style="margin-right: 10px;" type="primary" icon="el-icon-odometer" @click="handleTask">
         发布任务
       </el-button>
-      <el-button class="filter-item" style="margin-right: 10px;" type="primary" icon="el-icon-s-data" @click="handleCreate">
+      <el-button class="filter-item" style="margin-right: 10px;" type="primary" icon="el-icon-s-data" @click="handleAnalyze">
         统计信息
       </el-button>
       <el-button v-waves class="filter-item" style="margin-right: 10px;" type="primary" icon="el-icon-refresh-left" @click="handleReset">
         重置
       </el-button>
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
+      <el-button v-waves class="filter-item" style="margin-right: 10px;" type="primary" icon="el-icon-download" @click="handleDownload">
         导出
       </el-button>
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-upload" @click="handleImport">
-        导入
-      </el-button>
+      <el-upload accept=".json" class="filter-item" type="primary" style="margin-right: 10px; margin-left: 10px; " action="/api/create/resource" :show-file-list="false" :before-upload="handleImport">
+        <el-button
+          v-waves
+          type="primary"
+          icon="el-icon-upload"
+        >
+          导入
+        </el-button>
+      </el-upload>
 
     </div>
     <el-divider><i class="el-icon-s-management" /></el-divider>
@@ -49,14 +55,37 @@
         </el-checkbox>
       </el-checkbox-group>
     </div>
-    <el-table :key="key" :data="tableData" fit highlight-current-row style="width: 100%" @select="handleSelect" @select-all="handleSelectAll">
+    <el-table :key="key" :data="tableData" fit highlight-current-row style="width: 100%" @select="handleSelect" @select-all="handleSelectAll" @sort-change="sortHandler">
       <el-table-column
         type="selection"
         width="55"
       />
-      <el-table-column v-for="colume in formThead" :key="colume" :label="colume">
+      <el-table-column v-for="colume in formThead" :key="colume" :label="colume" sortable="custom">
         <template slot-scope="scope">
-          {{ scope.row[colume] }}
+          <el-tag
+            v-for="tag in (scope.row[colume] instanceof Array)?scope.row[colume]:[]"
+            :key="tag+colume"
+            type="primary"
+            size="mini"
+            disable-transitions
+          >
+            {{ tag }}
+          </el-tag>
+          {{ !(scope.row[colume] instanceof Array)?scope.row[colume]:"" }}
+        </template>
+      </el-table-column>
+      <el-table-column label="操作">
+        <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="success"
+            @click="handlePerEdit(scope.$index, scope.row)"
+          >编辑</el-button>
+          <el-button
+            size="mini"
+            type="danger"
+            @click="handlePerDelete(scope.$index, scope.row)"
+          >删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -103,17 +132,42 @@
         </el-button>
       </div>
     </el-dialog>
+    <el-dialog :visible.sync="analyzeDialogFormVisible" title="统计信息">
+      <el-tabs tab-position="left" style="height: 500px;" @tab-click="analyzeTabClicked">
+        <el-tab-pane label="IP RANGE">
+          <analyze-template height="500px" :keyword="'IP RANGE'" :chart-data-promise="analyzedata('cidr',500)" />
+        </el-tab-pane>
+        <el-tab-pane label="Tags">
+          <analyze-template height="500px" :keyword="'TAGS'" :chart-data-promise="analyzedata('tags', 500)" />
+        </el-tab-pane>
+        <el-tab-pane label="Services">
+          <analyze-template height="500px" :keyword="'SERVICES'" :chart-data-promise="analyzedata('services',500)" />
+        </el-tab-pane>
+        <el-tab-pane label="Fingerprints">
+          <analyze-template height="500px" :keyword="'FINGERPRINTS'" :chart-data-promise="analyzedata('fingerprints',500)" />
+        </el-tab-pane>
+      </el-tabs>
+    </el-dialog>
+    <el-dialog :visible.sync="taskDialogFormVisible" title="发布任务">
+      test
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getresource } from '@/api/resource'
+import { updateresource, getresource, createresource, deleteresource, analyzeresource } from '@/api/resource'
 import waves from '@/directive/waves/index.js'
+import AnalyzeTemplate from './components/AnalyzeTemplate.vue'
 import { saveAs } from 'file-saver'
+const deepcopy = require('deepcopy')
+
 var defaultFormThead
 export default {
   directives: {
     waves
+  },
+  components: {
+    AnalyzeTemplate
   },
   data() {
     getresource({ page: 1 }).then(
@@ -141,13 +195,17 @@ export default {
       total: 0,
       selected: [],
       selectall: false,
-      constcol: ['name'],
+      constcol: ['name', 'id'],
       downloadDialogFormVisible: false,
       downloadformat: 'json',
       isupdate: false,
       dataDialogFormVisible: false,
       temp: {},
-      disableEditCol: ['updated', 'created']
+      disableEditCol: ['updated', 'created', 'id'],
+      sort: '',
+      desc: false,
+      analyzeDialogFormVisible: false,
+      taskDialogFormVisible: false
     }
   },
   computed: {
@@ -164,7 +222,7 @@ export default {
   watch: {
     checkboxVal(valArr) {
       // TODO: unique value for smallest value
-      getresource({ size: this.$data.size, page: this.$data.page, columes: this.$data.columes }).then(data => {
+      this.callGetResource({}).then(data => {
         this.$data.tableData = data.data.columedatas
         this.formThead = this.formTheadOptions.filter(i => valArr.indexOf(i) >= 0)
         this.key = this.key + 1
@@ -172,20 +230,23 @@ export default {
     }
   },
   methods: {
+    handleTask: function() {
+      this.taskDialogFormVisible = true
+    },
     handleSizeChange: function(size) {
       this.$data.size = size
-      getresource({ size, page: this.$data.currentpage }).then(data => {
+      this.callGetResource({}).then(data => {
         this.$data.tableData = data.data.columedatas
       })
     },
     handleCurrentChange: function(page) {
       this.$data.currentpage = page
-      getresource({ size: this.$data.size, page }).then(data => {
+      this.callGetResource({}).then(data => {
         this.$data.tableData = data.data.columedatas
       })
     },
     handleFilter: function(value) {
-      return
+      this.refresh()
     },
     handleCreate: function() {
       this.$data.isupdate = false
@@ -197,6 +258,7 @@ export default {
     },
     handleSelect: function(value) {
       this.$data.selected = value
+      this.$data.selectall = false
     },
     handleSelectAll: function(value) {
       this.$data.selectall = value.length !== 0
@@ -213,7 +275,8 @@ export default {
         })
         return
       }
-      this.$data.temp = this.$data.selected[0]
+
+      this.$data.temp = deepcopy(this.$data.selected[0])
       this.$data.dataDialogFormVisible = true
     },
     downloadAction: function() {
@@ -223,7 +286,7 @@ export default {
         this.download(downloaddata)
         this.$data.downloadDialogFormVisible = false
       } else {
-        getresource({ selectall: this.$data.selectall, condition: this.$data.listQuery })
+        this.callGetResource({})
           .then(data => {
             this.download(data.data.columedatas)
             this.$data.downloadDialogFormVisible = false
@@ -263,13 +326,209 @@ export default {
       }
     },
     updateData: function() {
-      this.$data.dataDialogFormVisible = false
+      updateresource({
+        columes: this.$data.checkboxVal,
+        page: this.$data.currentpage,
+        size: this.$data.size,
+        condition: this.$data.listQuery,
+        selectall: this.$data.selectall,
+        selected: this.$data.selected,
+        data: this.$data.temp
+      }).then(data => {
+        if (data.success) {
+          this.$notify({
+            title: '成功',
+            message: '修改成功',
+            type: 'success'
+          })
+        } else {
+          this.$notify({
+            title: '失败',
+            message: data.msg,
+            type: 'error'
+          })
+        }
+
+        this.$data.dataDialogFormVisible = false
+      }).catch((e) => {
+        this.$notify.error({
+          title: '错误',
+          message: '修改失败'
+        })
+      })
     },
     createData: function() {
-      this.$data.dataDialogFormVisible = false
+      createresource(this.temp).then(data => {
+        if (data.success) {
+          this.$notify({
+            title: '成功',
+            message: '添加成功',
+            type: 'success'
+          })
+        } else {
+          this.$notify({
+            title: '失败',
+            message: data.msg,
+            type: 'error'
+          })
+        }
+        this.$data.dataDialogFormVisible = false
+      }).catch(e => {
+        this.$notify({
+          title: '失败',
+          message: e,
+          type: 'error'
+        })
+      })
     },
-    handleImport: function() {
-      return
+    handleImport: function(file) {
+      file.text().then(data => {
+        data = JSON.parse(data)
+        return createresource(data)
+      }).then(data => {
+        if (data.success) {
+          this.$notify({
+            title: '成功',
+            message: '导入成功',
+            type: 'success'
+          })
+          this.refresh()
+        } else {
+          this.$notify({
+            title: '失败',
+            message: '导入失败: ' + data.msg,
+            type: 'error'
+          })
+        }
+      })
+        .catch(e => {
+          this.$notify(
+            {
+              title: '失败',
+              message: e,
+              type: 'error'
+            }
+          )
+        })
+      return false
+    },
+    refresh: function() {
+      this.callGetResource({}).then(data => {
+        this.$data.tableData = data.data.columedatas
+        // this.key = this.key + 1
+      })
+    },
+    callGetResource: function(data) {
+      var keymap = {
+        columes: this.$data.checkboxVal,
+        page: this.$data.currentpage,
+        size: this.$data.size,
+        sort: this.$data.sort,
+        desc: this.$data.desc,
+        condition: this.$data.listQuery,
+        selectall: this.$data.selectall,
+        selected: this.$data.selected
+      }
+      Object.keys(keymap).forEach(k => {
+        if (data[k] !== '' && data[k] !== [] && data[k] !== {} && data[k] !== undefined) {
+          keymap[k] = data[k]
+        }
+      })
+      return getresource(keymap)
+    },
+    handleDelete: function() {
+      this.$confirm('确认删除', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        deleteresource({
+          columes: this.$data.checkboxVal,
+          page: this.$data.currentpage,
+          size: this.$data.size,
+          sort: this.$data.sort,
+          desc: this.$data.desc,
+          condition: this.$data.listQuery,
+          selectall: this.$data.selectall,
+          selected: this.$data.selected
+        }).then(data => {
+          this.$notify({
+            type: 'success',
+            message: '删除成功!',
+            title: '提示'
+          })
+        })
+      }).catch(() => {
+        this.$notify({
+          type: 'info',
+          message: '已取消删除',
+          title: '提示'
+        })
+      })
+    },
+    sortHandler: function(data) {
+      this.$data.sort = data.column.label
+      this.$data.desc = data.order === 'descending'
+      this.refresh()
+    },
+    handlePerEdit: function(index, row) {
+      this.$data.temp = row
+      this.$data.isupdate = true
+      this.$data.dataDialogFormVisible = true
+    },
+    handlePerDelete: function(index, row) {
+      this.$confirm('确认删除', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        deleteresource({
+          columes: this.$data.checkboxVal,
+          page: this.$data.currentpage,
+          size: this.$data.size,
+          sort: this.$data.sort,
+          desc: this.$data.desc,
+          condition: this.$data.listQuery,
+          selectall: false,
+          selected: [row]
+        }).then(data => {
+          this.$notify({
+            type: 'success',
+            message: '删除成功!',
+            title: '提示'
+          })
+        })
+      }).catch(() => {
+        this.$notify({
+          type: 'info',
+          message: '已取消删除',
+          title: '提示'
+        })
+      })
+    },
+    handleAnalyze: function() {
+      this.$data.analyzeDialogFormVisible = true
+    },
+    analyzedata: function(target, limit) {
+      var data = {
+        columes: this.$data.checkboxVal,
+        page: this.$data.currentpage,
+        size: this.$data.size,
+        sort: this.$data.sort,
+        desc: this.$data.desc,
+        condition: this.$data.listQuery,
+        selectall: this.$data.selectall,
+        selected: this.$data.selected,
+        target: target,
+        limit
+      }
+      return analyzeresource(data)
+    },
+    analyzeTabClicked: function(tab, event) {
+      console.log('clicked')
+      this.$nextTick(() => {
+        tab.$children[0].resize()
+      })
     }
   }
 }
