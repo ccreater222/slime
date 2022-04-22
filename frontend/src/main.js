@@ -14,11 +14,11 @@ import router from './router'
 import '@/icons' // icon
 import { library } from '@fortawesome/fontawesome-svg-core'
 /* import specific icons */
-import { faBug, faServer, faClock, faList, faCubes } from '@fortawesome/free-solid-svg-icons'
+import { faBug, faServer, faClock, faList, faCubes, faGear } from '@fortawesome/free-solid-svg-icons'
 /* import font awesome icon component */
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-library.add(faBug, faServer, faClock, faList, faCubes)
+library.add(faBug, faServer, faClock, faList, faCubes, faGear)
 
 /* add font awesome icon component */
 Vue.component('font-awesome-icon', FontAwesomeIcon)

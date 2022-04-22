@@ -17,6 +17,7 @@ require('echarts/lib/component/title')
 require('echarts/lib/component/tooltip')
 require('echarts/lib/component/legend')
 require('echarts/lib/chart/pie')
+import { analyzeresource } from '@/api/resource'
 
 export default {
   props: {
@@ -43,18 +44,11 @@ export default {
       chartData: null
     }
   },
-  watch: {
-    chartDataPromise: {
-      handler(val) {
-        val.then(data => {
-          this.$data.chartData = data.data
-          this.setOptions(data.data)
-        })
-      }
-    }
-  },
   mounted() {
     this.chartDataPromise.then(data => {
+      return analyzeresource(data)
+    }).then(data => {
+      console.log(data)
       this.chartData = data.data
       this.setOptions(data.data)
     })
@@ -70,6 +64,14 @@ export default {
     this.echarts = null
   },
   methods: {
+    refreshdata() {
+      this.chartDataPromise.then(data => {
+        return analyzeresource(data)
+      }).then(data => {
+        this.chartData = data.data
+        this.setOptions(data.data)
+      })
+    },
     initChat() {
       this.echarts = echarts.init(this.$refs.echart, null, {
         height: this.height,

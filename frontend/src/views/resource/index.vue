@@ -132,8 +132,8 @@
         </el-button>
       </div>
     </el-dialog>
-    <el-dialog :visible.sync="analyzeDialogFormVisible" title="统计信息">
-      <el-tabs tab-position="left" style="height: 500px;" @tab-click="analyzeTabClicked">
+    <el-dialog :visible.sync="analyzeDialogFormVisible" title="统计信息" @open="analyzeTabOpened">
+      <el-tabs ref="analyzetab" tab-position="left" style="height: 500px;" @tab-click="analyzeTabClicked">
         <el-tab-pane label="IP RANGE">
           <analyze-template height="500px" :keyword="'IP RANGE'" :chart-data-promise="analyzedata('cidr',500)" />
         </el-tab-pane>
@@ -149,15 +149,57 @@
       </el-tabs>
     </el-dialog>
     <el-dialog :visible.sync="taskDialogFormVisible" title="发布任务">
-      test
+      <el-card class="box-card">
+        <div slot="header" class="clearfix">
+          <el-steps :active="taskstep" align-center>
+            <el-step v-for="stagename in Object.keys(stage)" :key="stagename" :title="stage[stagename].display" />
+          </el-steps>
+        </div>
+        <el-row v-for="stagename in Object.keys(plugins)" v-show="stagename === Object.keys(plugins)[taskstep]" :key="stagename">
+          <el-col :span="6">
+            <el-table empty-text="请选中插件" size="small" :show-header="false" :data="selectedplugins[stagename]">
+              <el-table-column align="center" label="插件">
+                <template slot-scope="scope">{{ scope.row }}</template>
+              </el-table-column>
+            </el-table>
+          </el-col>
+          <el-col :span="18">
+            <el-collapse v-model="viewedplugins" accordion>
+              <el-collapse-item v-for="plugin in plugins[stagename]" :key="plugin.name" :name="plugin.name">
+                <template slot="title">
+                  <el-checkbox :false-label="JSON.stringify([false,plugin.name])" :true-label="JSON.stringify([true,plugin.name])" @change="selectplugin">{{ plugin.name }}</el-checkbox>
+                </template>
+                <plugin-config :plugininfo="plugin" :stagename="stagename" @datachanged="pluginConfigUpdate" />
+              </el-collapse-item>
+            </el-collapse>
+          </el-col>
+        </el-row>
+      </el-card>
+      <el-row type="flex" justify="center" style="margin-top: 20px;">
+        <el-col :span="2">
+          <el-button type="primary" @click="taskDialogFormVisible=false">取消</el-button>
+        </el-col>
+        <el-col :span="2">
+          <el-button type="primary" @click="taskstep>0?taskstep--:0">上一步</el-button>
+        </el-col>
+        <el-col :span="2">
+          <el-button type="primary" @click="taskstep<Object.keys(stage).length-1?taskstep++:Object.keys(stage).length-1">下一步</el-button>
+        </el-col>
+        <el-col :span="2">
+          <el-button type="primary" @click="submitTask">完成</el-button>
+        </el-col>
+      </el-row>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { updateresource, getresource, createresource, deleteresource, analyzeresource } from '@/api/resource'
+import { updateresource, getresource, createresource, deleteresource } from '@/api/resource'
+import { getplugins } from '@/api/plugins'
+import { createtask } from '@/api/task'
 import waves from '@/directive/waves/index.js'
 import AnalyzeTemplate from './components/AnalyzeTemplate.vue'
+import PluginConfig from './components/PluginConfig.vue'
 import { saveAs } from 'file-saver'
 const deepcopy = require('deepcopy')
 
@@ -167,7 +209,8 @@ export default {
     waves
   },
   components: {
-    AnalyzeTemplate
+    AnalyzeTemplate,
+    PluginConfig
   },
   data() {
     getresource({ page: 1 }).then(
@@ -181,8 +224,21 @@ export default {
         this.$data.total = data.total
       }
     )
+    getplugins().then(data => {
+      this.$data.stage = data.data.stage
+      this.$data.plugins = data.data.plugins
+      Object.keys(this.$data.stage).forEach(k => {
+        this.$data.selectedplugins[k] = []
+        this.$data.pluginsconfig[k] = {}
+      })
+    })
 
     return {
+      pluginsconfig: {},
+      viewedplugins: '',
+      selectedplugins: {},
+      plugins: {},
+      taskstep: 0,
       tableData: [],
       key: 1,
       formTheadOptions: [],
@@ -205,7 +261,8 @@ export default {
       sort: '',
       desc: false,
       analyzeDialogFormVisible: false,
-      taskDialogFormVisible: false
+      taskDialogFormVisible: false,
+      stage: []
     }
   },
   computed: {
@@ -230,6 +287,84 @@ export default {
     }
   },
   methods: {
+    submitTask: function() {
+      const data = {
+        stageinfo: {
+
+        },
+        columes: this.$data.checkboxVal,
+        page: this.$data.currentpage,
+        size: this.$data.size,
+        sort: this.$data.sort,
+        desc: this.$data.desc,
+        condition: this.$data.listQuery,
+        selectall: this.$data.selectall,
+        selected: this.$data.selected
+      }
+      const stageorder = Object.keys(this.$data.stage)
+      let state = 0
+      const targetstage = []
+      for (var i = 0; i < stageorder.length; i++) {
+        var stagename = stageorder[i]
+        var tmp = {}
+        tmp[stagename] = this.$data.selectedplugins[stagename]
+        if (state === 0 && this.$data.selectedplugins[stagename].length > 0) {
+          targetstage.push(tmp)
+          state = 1
+          continue
+        }
+        if (state === 1) {
+          if (this.$data.selectedplugins[stagename].length > 0) {
+            targetstage.push(tmp)
+          } else {
+            break
+          }
+        }
+      }
+      targetstage.forEach(v => {
+        var stagename = Object.keys(v)[0]
+        data.stageinfo[stagename] = {}
+        v[stagename].forEach(vv => {
+          var config = this.$data.pluginsconfig[stagename][vv]
+          if (config === undefined) {
+            config = {}
+          }
+          data.stageinfo[stagename][vv] = config
+        })
+      })
+      createtask(data).then(data => {
+        if (data.success) {
+          this.$notify({
+            title: '任务发布成功',
+            message: '任务发布成功',
+            type: 'success'
+          }
+          )
+          this.$data.taskDialogFormVisible = false
+        } else {
+          this.$notify({
+            title: '任务发布失败',
+            message: data.msg,
+            type: 'error'
+          }
+          )
+        }
+      })
+    },
+    pluginConfigUpdate: function(stagename, pluginname, config) {
+      this.$data.pluginsconfig[stagename][pluginname] = config
+    },
+    selectplugin: function(val) {
+      val = JSON.parse(val)[1]
+      var stagename = Object.keys(this.$data.stage)[this.taskstep]
+      var index = this.$data.selectedplugins[stagename].indexOf(val)
+      if (index === -1) {
+        this.$data.selectedplugins[stagename].push(val)
+      }
+      if (index !== -1) {
+        this.$data.selectedplugins[stagename].splice(index, 1)
+      }
+    },
     handleTask: function() {
       this.taskDialogFormVisible = true
     },
@@ -510,22 +645,29 @@ export default {
       this.$data.analyzeDialogFormVisible = true
     },
     analyzedata: function(target, limit) {
-      var data = {
-        columes: this.$data.checkboxVal,
-        page: this.$data.currentpage,
-        size: this.$data.size,
-        sort: this.$data.sort,
-        desc: this.$data.desc,
-        condition: this.$data.listQuery,
-        selectall: this.$data.selectall,
-        selected: this.$data.selected,
-        target: target,
-        limit
+      return new Promise((resolve, reject) => {
+        var data = {
+          columes: this.$data.checkboxVal,
+          page: this.$data.currentpage,
+          size: this.$data.size,
+          sort: this.$data.sort,
+          desc: this.$data.desc,
+          condition: this.$data.listQuery,
+          selectall: this.$data.selectall,
+          selected: this.$data.selected,
+          target: target,
+          limit
+        }
+        return resolve(data)
+      })
+    },
+    analyzeTabOpened: function() {
+      for (var i = 1; i < this.$refs.analyzetab.$children.length; i++) {
+        this.$refs.analyzetab.$children[i].$children[0].refreshdata()
       }
-      return analyzeresource(data)
     },
     analyzeTabClicked: function(tab, event) {
-      console.log('clicked')
+      tab.$children[0].refreshdata()
       this.$nextTick(() => {
         tab.$children[0].resize()
       })

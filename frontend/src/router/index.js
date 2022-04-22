@@ -109,7 +109,16 @@ export const constantRoutes = [
       meta: { title: '定时任务', fontawesomeicon: 'fa-clock' }
     }]
   },
-
+  {
+    path: '/config',
+    component: Layout,
+    children: [{
+      path: 'index',
+      name: '配置',
+      component: () => import('@/views/config/index'),
+      meta: { title: '配置', fontawesomeicon: 'fa-gear' }
+    }]
+  },
   {
     path: 'external-link',
     component: Layout,
