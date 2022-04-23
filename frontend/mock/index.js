@@ -6,13 +6,15 @@ const table = require('./table')
 const resource = require('./resource')
 const plugins = require('./plugins')
 const task = require('./task')
+const service = require('./service')
 
 const mocks = [
   ...user,
   ...table,
   ...resource,
   ...plugins,
-  ...task
+  ...task,
+  ...service
 ]
 
 // for front mock

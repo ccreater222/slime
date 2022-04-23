@@ -1,8 +1,8 @@
 import request from '@/utils/request'
 
 export function getresource(data) {
-  if (!data.colume) {
-    data.colume = []
+  if (!data.column) {
+    data.column = []
   }
   if (!data.size) {
     data.size = 20

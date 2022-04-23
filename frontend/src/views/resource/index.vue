@@ -60,18 +60,18 @@
         type="selection"
         width="55"
       />
-      <el-table-column v-for="colume in formThead" :key="colume" :label="colume" sortable="custom">
+      <el-table-column v-for="column in formThead" :key="column" :label="column" sortable="custom">
         <template slot-scope="scope">
           <el-tag
-            v-for="tag in (scope.row[colume] instanceof Array)?scope.row[colume]:[]"
-            :key="tag+colume"
+            v-for="tag in (scope.row[column] instanceof Array)?scope.row[column]:[]"
+            :key="tag+column"
             type="primary"
             size="mini"
             disable-transitions
           >
             {{ tag }}
           </el-tag>
-          {{ !(scope.row[colume] instanceof Array)?scope.row[colume]:"" }}
+          {{ !(scope.row[column] instanceof Array)?scope.row[column]:"" }}
         </template>
       </el-table-column>
       <el-table-column label="操作">
@@ -120,7 +120,11 @@
     <el-dialog :visible.sync="dataDialogFormVisible" :title="isupdate?'修改':'添加'">
       <el-form :model="temp" label-position="left" label-width="auto" style="margin-left:50px;">
         <el-form-item v-for="item in editablecol" :key="item" :label="item">
-          <el-input v-model="temp[item]" placeholder="Please input" />
+          <div v-if="(temp[item] instanceof Array)">
+            <editable-tag :tag-name="item" :dynamic-tags="temp[item]" @updatetag="updatetag" />
+          </div>
+          <el-input v-else-if="(typeof temp[item]) !== 'boolean'" v-model="temp[item]" placeholder="Please input" />
+          <el-input v-else :value="temp[item].toString()" placeholder="please input" @change="1" />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -149,6 +153,8 @@
       </el-tabs>
     </el-dialog>
     <el-dialog :visible.sync="taskDialogFormVisible" title="发布任务">
+      <!-- TODO: 修复动画bug -->
+      <!-- TODO: 添加插件拖拽排序功能 -->
       <el-card class="box-card">
         <div slot="header" class="clearfix">
           <el-steps :active="taskstep" align-center>
@@ -200,6 +206,7 @@ import { createtask } from '@/api/task'
 import waves from '@/directive/waves/index.js'
 import AnalyzeTemplate from './components/AnalyzeTemplate.vue'
 import PluginConfig from './components/PluginConfig.vue'
+import EditableTag from '@/components/EditableTag.vue'
 import { saveAs } from 'file-saver'
 const deepcopy = require('deepcopy')
 
@@ -210,17 +217,18 @@ export default {
   },
   components: {
     AnalyzeTemplate,
-    PluginConfig
+    PluginConfig,
+    EditableTag
   },
   data() {
     getresource({ page: 1 }).then(
       data => {
-        defaultFormThead = data.data.columes
+        defaultFormThead = data.data.columns
         this.$data.defaultFormThead = defaultFormThead
         this.$data.checkboxVal = defaultFormThead
         this.$data.formThead = defaultFormThead
         this.$data.formTheadOptions = defaultFormThead
-        this.$data.tableData = data.data.columedatas
+        this.$data.tableData = data.data.columndatas
         this.$data.total = data.total
       }
     )
@@ -280,19 +288,22 @@ export default {
     checkboxVal(valArr) {
       // TODO: unique value for smallest value
       this.callGetResource({}).then(data => {
-        this.$data.tableData = data.data.columedatas
+        this.$data.tableData = data.data.columndatas
         this.formThead = this.formTheadOptions.filter(i => valArr.indexOf(i) >= 0)
         this.key = this.key + 1
       })
     }
   },
   methods: {
+    updatetag: function(item, data) {
+      this.$data.temp[item] = data
+    },
     submitTask: function() {
       const data = {
         stageinfo: {
 
         },
-        columes: this.$data.checkboxVal,
+        columns: this.$data.checkboxVal,
         page: this.$data.currentpage,
         size: this.$data.size,
         sort: this.$data.sort,
@@ -371,13 +382,13 @@ export default {
     handleSizeChange: function(size) {
       this.$data.size = size
       this.callGetResource({}).then(data => {
-        this.$data.tableData = data.data.columedatas
+        this.$data.tableData = data.data.columndatas
       })
     },
     handleCurrentChange: function(page) {
       this.$data.currentpage = page
       this.callGetResource({}).then(data => {
-        this.$data.tableData = data.data.columedatas
+        this.$data.tableData = data.data.columndatas
       })
     },
     handleFilter: function(value) {
@@ -386,6 +397,10 @@ export default {
     handleCreate: function() {
       this.$data.isupdate = false
       this.$data.temp = {}
+      this.$data.editablecol.forEach(item => {
+        this.$data.tagInputVisible[item] = false
+        this.$data.tagInputValue[item] = ''
+      })
       this.$data.dataDialogFormVisible = true
     },
     handleDownload: function(value) {
@@ -412,6 +427,10 @@ export default {
       }
 
       this.$data.temp = deepcopy(this.$data.selected[0])
+      this.$data.editablecol.forEach(item => {
+        this.$data.tagInputVisible[item] = false
+        this.$data.tagInputValue[item] = ''
+      })
       this.$data.dataDialogFormVisible = true
     },
     downloadAction: function() {
@@ -423,7 +442,7 @@ export default {
       } else {
         this.callGetResource({})
           .then(data => {
-            this.download(data.data.columedatas)
+            this.download(data.data.columndatas)
             this.$data.downloadDialogFormVisible = false
           })
       }
@@ -462,7 +481,7 @@ export default {
     },
     updateData: function() {
       updateresource({
-        columes: this.$data.checkboxVal,
+        columns: this.$data.checkboxVal,
         page: this.$data.currentpage,
         size: this.$data.size,
         condition: this.$data.listQuery,
@@ -549,13 +568,13 @@ export default {
     },
     refresh: function() {
       this.callGetResource({}).then(data => {
-        this.$data.tableData = data.data.columedatas
+        this.$data.tableData = data.data.columndatas
         // this.key = this.key + 1
       })
     },
     callGetResource: function(data) {
       var keymap = {
-        columes: this.$data.checkboxVal,
+        columns: this.$data.checkboxVal,
         page: this.$data.currentpage,
         size: this.$data.size,
         sort: this.$data.sort,
@@ -578,7 +597,7 @@ export default {
         type: 'warning'
       }).then(() => {
         deleteresource({
-          columes: this.$data.checkboxVal,
+          columns: this.$data.checkboxVal,
           page: this.$data.currentpage,
           size: this.$data.size,
           sort: this.$data.sort,
@@ -618,7 +637,7 @@ export default {
         type: 'warning'
       }).then(() => {
         deleteresource({
-          columes: this.$data.checkboxVal,
+          columns: this.$data.checkboxVal,
           page: this.$data.currentpage,
           size: this.$data.size,
           sort: this.$data.sort,
@@ -647,7 +666,7 @@ export default {
     analyzedata: function(target, limit) {
       return new Promise((resolve, reject) => {
         var data = {
-          columes: this.$data.checkboxVal,
+          columns: this.$data.checkboxVal,
           page: this.$data.currentpage,
           size: this.$data.size,
           sort: this.$data.sort,
