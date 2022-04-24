@@ -5,6 +5,7 @@
       :key="tag"
       closable
       :disable-transitions="false"
+      size="mini"
       @close="handleClose(tag)"
     >
       {{ tag }}

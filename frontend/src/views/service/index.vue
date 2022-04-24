@@ -70,16 +70,21 @@
       </el-table-column>
       <el-table-column v-for="column in formThead" :key="column" :label="column" sortable="custom" :show-overflow-tooltip="true">
         <template slot-scope="scope">
-          <el-tag
-            v-for="tag in (scope.row[column] instanceof Array)?scope.row[column]:[]"
-            :key="tag+column"
-            type="primary"
-            size="mini"
-            disable-transitions
-          >
-            {{ tag }}
-          </el-tag>
-          {{ !(scope.row[column] instanceof Array)?scope.row[column]:"" }}
+          <template v-if="(scope.row[column] instanceof Array)">
+            <el-tag
+              v-for="tag in scope.row[column]"
+              :key="tag+column"
+              type="primary"
+              size="mini"
+              disable-transitions
+            >
+              {{ tag }}
+            </el-tag>
+          </template>
+          <router-link v-else-if="column === 'taskid'" class="link" :to="{path: '/task/index',query: {taskid: scope.row[column] }}">{{ scope.row[column] }}</router-link>
+          <template v-else>
+            {{ scope.row[column] }}
+          </template>
         </template>
       </el-table-column>
     </el-table>

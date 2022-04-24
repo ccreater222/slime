@@ -62,16 +62,21 @@
       />
       <el-table-column v-for="column in formThead" :key="column" :label="column" sortable="custom">
         <template slot-scope="scope">
-          <el-tag
-            v-for="tag in (scope.row[column] instanceof Array)?scope.row[column]:[]"
-            :key="tag+column"
-            type="primary"
-            size="mini"
-            disable-transitions
-          >
-            {{ tag }}
-          </el-tag>
-          {{ !(scope.row[column] instanceof Array)?scope.row[column]:"" }}
+          <template v-if="(scope.row[column] instanceof Array)">
+            <el-tag
+              v-for="tag in scope.row[column]"
+              :key="tag+column"
+              type="primary"
+              size="mini"
+              disable-transitions
+            >
+              {{ tag }}
+            </el-tag>
+          </template>
+          <router-link v-else-if="column === 'taskid'" class="link" :to="{path: '/task/index',query: {taskid: scope.row[column] }}">{{ scope.row[column] }}</router-link>
+          <template v-else>
+            {{ scope.row[column] }}
+          </template>
         </template>
       </el-table-column>
       <el-table-column label="操作">
@@ -155,6 +160,7 @@
     <el-dialog :visible.sync="taskDialogFormVisible" title="发布任务">
       <!-- TODO: 修复动画bug -->
       <!-- TODO: 添加插件拖拽排序功能 -->
+      <!-- TODO: 添加读取默认配置功能 -->
       <el-card class="box-card">
         <div slot="header" class="clearfix">
           <el-steps :active="taskstep" align-center>
@@ -397,10 +403,8 @@ export default {
     handleCreate: function() {
       this.$data.isupdate = false
       this.$data.temp = {}
-      this.$data.editablecol.forEach(item => {
-        this.$data.tagInputVisible[item] = false
-        this.$data.tagInputValue[item] = ''
-      })
+      this.$data.temp.tag = []
+      this.$data.temp.finger = []
       this.$data.dataDialogFormVisible = true
     },
     handleDownload: function(value) {
@@ -427,10 +431,6 @@ export default {
       }
 
       this.$data.temp = deepcopy(this.$data.selected[0])
-      this.$data.editablecol.forEach(item => {
-        this.$data.tagInputVisible[item] = false
-        this.$data.tagInputValue[item] = ''
-      })
       this.$data.dataDialogFormVisible = true
     },
     downloadAction: function() {
@@ -681,6 +681,9 @@ export default {
       })
     },
     analyzeTabOpened: function() {
+      if (this.$refs.analyzetab === undefined) {
+        return
+      }
       for (var i = 1; i < this.$refs.analyzetab.$children.length; i++) {
         this.$refs.analyzetab.$children[i].$children[0].refreshdata()
       }

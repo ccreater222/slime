@@ -15,14 +15,23 @@ export default {
     stagename: {
       type: String,
       required: true
+    },
+    config: {
+      type: Object,
+      default() {
+        return {}
+      }
     }
   },
   data() {
-    var config = {}
-    this.plugininfo.config.forEach(k => { config[k] = '' })
-    return {
-      config
+    this.plugininfo.config.forEach(k => {
+      if (this.config[k] === undefined) {
+        this.config[k] = ''
+      }
     }
+    )
+
+    return {}
   },
   methods: {
     inputHandler(v) {

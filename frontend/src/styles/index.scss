@@ -189,3 +189,12 @@ aside {
 .multiselect--active {
   z-index: 1000 !important;
 }
+
+.link {
+  color: #409EFF;
+}
+.link:hover {
+  text-decoration: underline;
+  cursor: pointer;
+  color: #409EFF;
+}

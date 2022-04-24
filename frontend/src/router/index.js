@@ -84,7 +84,8 @@ export const constantRoutes = [
       path: 'index',
       name: '任务管理',
       component: () => import('@/views/task/index'),
-      meta: { title: '任务管理', fontawesomeicon: 'fa-server' }
+      meta: { title: '任务管理', fontawesomeicon: 'fa-server' },
+      props: route => ({ taskid: route.query.taskid })
     }]
   },
 

@@ -1,5 +1,5 @@
 <template>
-  <div :style="{height:height,width:width}" :class="chart" />
+  <div :style="{height:height,width:width}" />
 </template>
 <script>
 import * as echarts from 'echarts/core'

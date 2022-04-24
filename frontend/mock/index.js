@@ -1,14 +1,22 @@
 const Mock = require('mockjs')
 const { param2Obj } = require('./utils')
 
+const schedule = require('./schedule')
 const user = require('./user')
+const vul = require('./vul')
+const dashboard = require('./dashboard')
 const table = require('./table')
 const resource = require('./resource')
 const plugins = require('./plugins')
 const task = require('./task')
 const service = require('./service')
+const config = require('./config')
 
 const mocks = [
+  ...config,
+  ...schedule,
+  ...vul,
+  ...dashboard,
   ...user,
   ...table,
   ...resource,

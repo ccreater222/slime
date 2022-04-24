@@ -136,6 +136,7 @@
 </template>
 
 <script>
+// TODO: 将任务添加到计划任务
 import { actiontask, gettask } from '@/api/task'
 import waves from '@/directive/waves/index.js'
 export default {
@@ -143,12 +144,13 @@ export default {
   directives: {
     waves
   },
+  props: {
+    taskid: {
+      type: String,
+      default: ''
+    }
+  },
   data() {
-    gettask({ page: 1 }).then(data => {
-      this.$data.tasklist = data.data.tasklist
-      this.$data.taskcolumn = data.data.taskcolumn
-      this.$data.total = data.data.total
-    })
     return {
       key: 1,
       tasklist: [],
@@ -166,6 +168,16 @@ export default {
       selectall: false,
       selected: []
     }
+  },
+  mounted() {
+    if (this.taskid !== '') {
+      this.$data.listQuery['taskid'] = this.taskid
+    }
+    this.callGetTask({}).then(data => {
+      this.$data.tasklist = data.data.tasklist
+      this.$data.taskcolumn = data.data.taskcolumn
+      this.$data.total = data.data.total
+    })
   },
   methods: {
     handleAction(action) {
