@@ -1,8 +1,7 @@
-from util.logging import ExceptionDecorator
+from .util.logging import ExceptionDecorator
 from flask import Flask
+from .worker import cli_bp
+from .api import app_bp
 
 app = Flask(__name__)
-
-@app.cli.command("worker",help="Run the worker")
-def run_worker():
-    print("run worker")
+app.register_blueprint(cli_bp, cli_group=None)
