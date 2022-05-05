@@ -17,3 +17,6 @@ class FscanConfig(PluginConfig):
     @proxy.setter
     def proxy(self,_proxy):
         self._proxy = _proxy
+    
+    def apply_config(self):
+        pass

@@ -2,8 +2,9 @@ import os
 from importlib import import_module
 from typing import List
 from plugins import *
-from inspect import getmembers,isclass,ismethod,isfunction
+from inspect import getmembers,isclass
 from .stage_model import *
+from util.util import get_all_keys
 
 STAGE_LIST = ["info_collect","topdomain_collect","subdomain_collect","ip_info","port_detect","service_detect","fingerprint_detect","poc_scan","final_step"]
 PLUGIN_LIST = {}
@@ -15,20 +16,16 @@ class InputFilter:
         self._task_id = task_id
 
     def filter(self)->List[BaseModel]:
-        return []
+        # TODO : remove test
+        model = IpInfoModel(False, '124.221.120.144')
+        return [model]
 
 class PluginConfig:
 
     _slime_name = ''
 
-    @classmethod
     def get_all_keys(cls):
-        all_keys = []
-        for name,_ in getmembers(cls,lambda x: not ismethod(x) and not isfunction(x)):
-            if name.startswith('_'):
-                continue
-            all_keys.append(name)
-        return all_keys
+        return get_all_keys(cls)
     
     # TODO
     def load_from_database(self, stage, task_id):
@@ -43,6 +40,7 @@ class BasePlugin:
 
     stagelist = []
     config:PluginConfig = None
+    task_id = ''
 
     _slime_config = None
     _slime_name = ''
@@ -52,6 +50,9 @@ class BasePlugin:
     # stage: 运行阶段
     # filter: 数据库过滤条件
     # task_id: 用于选择上个阶段新发现的资产 ,根据时间来过滤后来添加的数据
+    def save_log(log: str) -> None:
+        pass
+
     @classmethod
     def dispatch(cls, stage, filter, task_id):
         # is install
@@ -60,6 +61,7 @@ class BasePlugin:
 
         # init instance
         instance = cls()
+        cls.task_id = task_id
         # load config
         config = cls._slime_config()
         config.load_from_database(stage, task_id)
@@ -67,13 +69,13 @@ class BasePlugin:
         instance.config = config
 
         # load target
-        filter_instance = InputFilter(filter, None,task_id)
+        filter_instance = InputFilter(filter, instance.getmodel(stage),task_id)
 
         # run
         result = getattr(instance,stage)(filter_instance.filter())
-
         # save result
-        map(lambda x:x.save(),result)
+
+        list(map(lambda x:x.save(),result))
 
     @staticmethod
     def getmodel(stage):
