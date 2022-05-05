@@ -66,7 +66,7 @@ class FscanPlugin(BasePlugin):
                 for port in parsed['ports'][ip]:
                     for target in target_list:
                         if target.ip == ip:
-                            port_model.append(PortDetectModel.generate(target, port))
+                            port_model.append(PortDetectModel.generate(target, int(port)))
                             break
         except FileNotFoundError:
             pass

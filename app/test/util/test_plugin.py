@@ -11,7 +11,7 @@ def test_plugin_config():
     instance = FscanConfig()
     assert instance.get_all_keys() == ['noping', 'proxy']
 
-#@pytest.mark.skip(reason="waste too much time")
+@pytest.mark.skip(reason="waste too much time")
 def test_base_plugin():
     plugin = FscanPlugin()
     assert plugin.getmodel('info_collect') == InfoCollectModel

@@ -6,3 +6,17 @@ def get_all_keys(cls):
             continue
         all_keys.append(name)
     return all_keys
+
+def dotset(v: dict):
+    dot_array = []
+    keys = v.keys()
+    result = map(lambda k: [k, dotset(v[k])] if type(v[k]) == dict else [k, None] ,keys)
+    for i in result:
+        key, val = i
+        if val == None:
+            dot_array.append([key,v[key]])
+        else:
+            for ii in val:
+                dot_array.append([key+'.'+ii[0], ii[1]])
+    return dot_array
+    
