@@ -4,7 +4,7 @@ from typing import List
 from plugins import *
 from inspect import getmembers,isclass
 from .stage_model import *
-from util.util import get_all_keys
+from util.util import get_all_keys, hex_objid
 
 STAGE_LIST = ["info_collect","topdomain_collect","subdomain_collect","ip_info","port_detect","service_detect","fingerprint_detect","poc_scan","final_step"]
 PLUGIN_LIST = {}
@@ -17,6 +17,56 @@ class InputFilter:
 
     def filter(self)->List[BaseModel]:
         # TODO : remove test
+        # filter item: columes, page, size, sort, desc, condition, selectall, selected
+        # 优先级: columes size sort desc page condition [selectall selected] 0. selected 1. condition 2. selectall
+        #"columes": this.$data.checkboxVal,
+        #"page": this.$data.currentpage,
+        #"size": this.$data.size,
+        #"sort": this.$data.sort,
+        #"desc": this.$data.desc,
+        #"condition": this.$data.listQuery,
+        #"selectall": this.$data.selectall,
+        #"selected": this.$data.selected
+        condition = {}
+        all_keys = get_all_stage_model_keys()
+        for key in all_keys:
+            if key in ['info', 'created']:
+                continue
+            if key not in self._filter['columes']:
+                condition[key] = {'$exists': False}
+
+        for k,v in self._filter['condition'].items():
+            if v.strip() == '' or not k in all_keys:
+                continue
+            if type(v) != str:
+                continue
+            
+            if k == 'finger' or k == 'tag':
+                condition[k] = {'$all': [v]}
+            elif k == 'port':
+                condition[k] = int(k)
+            elif k == 'updated':
+                continue
+            else:
+                condition[k] = v
+        
+        if self._filter['selected'] == []:
+            self._filter['selectall'] = True
+        if not self._filter['selectall']:
+            condition = {}
+            objid_arrays = []
+            for item in self._filter['selected']:
+                val = item.get('id',None)
+                if val == None:
+                    continue
+                objid_arrays.append(hex_objid(val))
+            condition['_id'] = {"$in": objid_arrays}
+        if self._task_id == '' or self._task_id == None:
+            resources = db_resource.find(condition)
+        else:
+            resources = db_resource.find({'$or': [condition, {'taskid': self._task_id}]})
+        # how to convert resources to Model
+        
         model = IpInfoModel(False, '124.221.120.144')
         return [model]
 

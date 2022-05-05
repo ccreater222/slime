@@ -26,3 +26,6 @@ def test_save():
     assert i+1
     db_resource.delete_many({'test_id': {'$exists': True}})
     
+def test_get_all_stage_model_keys():
+    keys = get_all_stage_model_keys()
+    assert len(keys) > 5

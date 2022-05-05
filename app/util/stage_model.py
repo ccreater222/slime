@@ -57,7 +57,7 @@ class BaseModel:
         update['$set'] = data
         db_resource.update_one(condition,update,upsert=True)
         
-
+    
     def get_all_keys(self):
         return get_all_keys(self)
     
@@ -174,3 +174,12 @@ class FinalStepModel(FingerprintDetectModel):
     pass
 
 STAGE_MODEL_LIST = [InfoCollectModel,TopdomainCollectModel,SubdomainCollectModel,IpInfoModel,PortDetectModel,ServiceDetectModel,FingerprintDetectModel,PocScanModel,FinalStepModel]
+
+def get_all_stage_model_keys():
+    keys = []
+    for stage in STAGE_MODEL_LIST + [BaseModel]:
+        if stage == PocScanModel:
+            continue
+        keys = keys + list(getattr(stage, '__annotations__',{}).keys())
+    keys.remove('_id')
+    return list(set(keys))
