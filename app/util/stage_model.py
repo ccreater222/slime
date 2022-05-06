@@ -14,6 +14,9 @@ class BaseModel:
     updated: datetime
     taskid: str
     _index_keys = ['name', 'topdomain', 'subdomain', 'ip', 'port']
+    def __init__(self, *args, **kwargs) -> None:
+        for k,v in kwargs.items():
+            setattr(self, k, v)
     def save(self):
         if not hasattr(self,'created'):
             self.created = datetime.now()
@@ -57,10 +60,23 @@ class BaseModel:
         update['$set'] = data
         db_resource.update_one(condition,update,upsert=True)
         
+    @classmethod
+    def load_from_db(cls, record):
+        instance = cls(**record)
     
     def get_all_keys(self):
         return get_all_keys(self)
     
+    @classmethod
+    def get_need_attr(cls):
+        parent = cls
+        attrs = []
+        while True:
+            if parent == BaseModel:
+                break
+            attrs = attrs + list(parent.__annotations__.keys())
+            parent = parent.__base__
+        return attrs
     @classmethod
     def generate(cls, model,*args, **kwargs):
         model_keys = model.get_all_keys()
@@ -89,59 +105,93 @@ class BaseModel:
 
 class InfoCollectModel(BaseModel):
     name: str
-    def __init__(self, name:str) -> None:
+    def __init__(self, name:str, *args, **kwargs) -> None:
         if type(name) != str:
             raise TypeError()
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            if len(kwargs.keys()) > 0:
+                raise e
         self.name = name
 
 class TopdomainCollectModel(InfoCollectModel):
     topdomain: str
-    def __init__(self, topdomain:str) -> None:
+    def __init__(self, topdomain:str, *args, **kwargs) -> None:
         if type(topdomain) != str:
             raise TypeError()
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            if len(kwargs.keys()) > 0:
+                raise e
         self.topdomain = topdomain
-
 class SubdomainCollectModel(TopdomainCollectModel):
     subdomain: str
-    def __init__(self, subdomain:str) -> None:
+    def __init__(self, subdomain:str, *args, **kwargs) -> None:
         if type(subdomain) != str:
             raise TypeError()
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            if len(kwargs.keys()) > 0:
+                raise e
         self.subdomain = subdomain
 
 class IpInfoModel(SubdomainCollectModel):
     iscdn: bool
     ip: str
-    def __init__(self, iscdn: bool, ip: str) -> None:
+    def __init__(self, iscdn: bool, ip: str, *args, **kwargs) -> None:
         if type(iscdn) != bool:
             raise TypeError()
         if type(ip) != str:
             raise TypeError()
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            if len(kwargs.keys()) > 0:
+                raise e
         self.iscdn = iscdn
         self.ip = ip
 
 class PortDetectModel(IpInfoModel):
     port: int
-    def __init__(self, port: int) -> None:
+    def __init__(self, port: int, *args, **kwargs) -> None:
         if type(port) != int :
             raise TypeError()
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            if len(kwargs.keys()) > 0:
+                raise e
         self.port = port
 
 class ServiceDetectModel(PortDetectModel):
     service: str
     info: dict
-    def __init__(self, service: str, info: dict) -> None:
+    def __init__(self, service: str, info: dict, *args, **kwargs) -> None:
         if type(service) != str:
             raise TypeError()
         if type(info) != dict:
             raise TypeError()
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            if len(kwargs.keys()) > 0:
+                raise e
         self.service = service
         self.info = info
 
 class FingerprintDetectModel(ServiceDetectModel):
     finger: list
-    def __init__(self, finger:list) -> None:
+    def __init__(self, finger:list, *args, **kwargs) -> None:
         if type(finger) != list:
             raise TypeError(finger)
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            if len(kwargs.keys()) > 0:
+                raise e
         self.finger = finger
 class PocScanModel(PortDetectModel):
     title: str
@@ -159,10 +209,15 @@ class PocScanModel(PortDetectModel):
             self.updated = datetime.now()
         db_vuldata.insert_one(self.toDict())
 
-    def __init__(self, title, type, plugin, info, req, resp) -> None:
+    def __init__(self, title, type, plugin, info, req, resp, *args, **kwargs) -> None:
         for i in [title, type, plugin, info, req, resp]:
             if type(i) != str:
                 raise TypeError()
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            if len(kwargs.keys()) > 0:
+                raise e
         self.title = title
         self.type = type
         self.plugin = plugin
@@ -171,7 +226,12 @@ class PocScanModel(PortDetectModel):
         self.resp = resp
 
 class FinalStepModel(FingerprintDetectModel):
-    pass
+    def __init__(self,  *args, **kwargs) -> None:
+        try:
+            super().__init__(**kwargs)
+        except Exception as e:
+            if len(kwargs.keys()) > 0:
+                raise e
 
 STAGE_MODEL_LIST = [InfoCollectModel,TopdomainCollectModel,SubdomainCollectModel,IpInfoModel,PortDetectModel,ServiceDetectModel,FingerprintDetectModel,PocScanModel,FinalStepModel]
 
