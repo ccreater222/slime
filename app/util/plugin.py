@@ -15,8 +15,11 @@ class InputFilter:
         self._filter = filter
         self._model = model
         self._task_id = task_id
-
+    # TODO: sort page tatal
     def filter(self)->List[BaseModel]:
+        client = db_resource
+        if self._model == PocScanModel:
+            client = db_vuldata
         condition = {}
         all_keys = get_all_stage_model_keys()
 
@@ -58,14 +61,14 @@ class InputFilter:
                 objid_arrays.append(hex_objid(val))
             condition['_id'] = {"$in": objid_arrays}
         if self._task_id == '' or self._task_id == None:
-            resources = db_resource.find(condition)
+            resources = client.find(condition)
         else:
             columes = {}
             keys = self._model.get_need_attr()
             for k in keys:
                 columes[k] = {'$exists': True}
             columes['taskid'] = self._task_id
-            resources = db_resource.find({'$or': [condition, columes]})
+            resources = client.find({'$or': [condition, columes]})
         # how to convert resources to Model
         result = []
         for i in resources:
@@ -82,7 +85,6 @@ class PluginConfig:
     def get_all_keys(cls):
         return get_all_keys(cls)
     
-    # TODO
     def load_from_database(self, stage, taskid):
         # task config > global config > default config
 
@@ -92,9 +94,8 @@ class PluginConfig:
         if global_config == None:
             global_config = {'config': {}}
         if task_config == None:
-            global_config = {'config': {}}
-        
-        for config in [global_config['config'], task_config['config']]:
+            task_config = {'config': {}}
+        for config in [global_config.get('config', {}), task_config.get('config', {})]:
             for k in self.get_all_keys():
                 val = config.get(k, None)
                 if val:
@@ -116,7 +117,6 @@ class PluginConfig:
         
 
 
-    # TODO 将配置引用到插件
     def apply_config(self):
         raise NotImplementedError()
 
@@ -135,6 +135,7 @@ class BasePlugin:
     # stage: 运行阶段
     # filter: 数据库过滤条件
     # task_id: 用于选择上个阶段新发现的资产 ,根据时间来过滤后来添加的数据
+    # TODO : 
     def save_log(log: str) -> None:
         pass
 
