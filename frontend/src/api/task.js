@@ -8,8 +8,8 @@ export function createtask(data) {
   })
 }
 export function gettask(data) {
-  if (!data.column) {
-    data.column = []
+  if (!data.columns) {
+    data.columns = []
   }
   if (!data.size) {
     data.size = 20

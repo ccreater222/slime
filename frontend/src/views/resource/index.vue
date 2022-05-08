@@ -512,7 +512,7 @@ export default {
       })
     },
     createData: function() {
-      createresource(this.temp).then(data => {
+      createresource([this.temp]).then(data => {
         if (data.success) {
           this.$notify({
             title: '成功',
@@ -527,6 +527,7 @@ export default {
           })
         }
         this.$data.dataDialogFormVisible = false
+        // TODO 修复数据同步问题
       }).catch(e => {
         this.$notify({
           title: '失败',
@@ -628,6 +629,12 @@ export default {
     handlePerEdit: function(index, row) {
       this.$data.temp = row
       this.$data.isupdate = true
+      const array_key = ['tag', 'finger']
+      array_key.forEach(k => {
+        if (this.formThead.indexOf(k) !== -1 && this.$data.temp[k] === undefined) {
+          this.$data.temp[k] = []
+        }
+      })
       this.$data.dataDialogFormVisible = true
     },
     handlePerDelete: function(index, row) {
@@ -651,6 +658,7 @@ export default {
             message: '删除成功!',
             title: '提示'
           })
+          this.tableData.splice(index, 1)
         })
       }).catch(() => {
         this.$notify({
