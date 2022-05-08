@@ -1,7 +1,7 @@
-from ..util.client import *
+from util.client import *
 from datetime import datetime,timedelta
 
-from ..util.response import SuccessResponse
+from util.response import SuccessResponse
 
 def countdata(client):
     result = [client.count_documents({}), []]

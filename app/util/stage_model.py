@@ -6,6 +6,7 @@ from datetime import datetime
 from bson import ObjectId
 from util.util import dotset, get_all_keys
 from util.client import db_resource,db_vuldata
+from dateutil import parser as dateparser
 
 class BaseModel:
     _id: ObjectId
@@ -15,7 +16,9 @@ class BaseModel:
     taskid: str
     _index_keys = ['name', 'topdomain', 'subdomain', 'ip', 'port']
     def __init__(self, *args, **kwargs) -> None:
+        all_annotations = FinalStepModel.get_all_annotations()
         for k,v in kwargs.items():
+            self.__annotations__[k] = all_annotations[k]
             setattr(self, k, v)
     def save(self):
         if not hasattr(self,'created'):
@@ -68,6 +71,18 @@ class BaseModel:
         return get_all_keys(self)
     
     @classmethod
+    def get_all_annotations(cls):
+        parent = cls
+        annotations = {}
+        while True:
+            if parent == object:
+                break
+            for k,v in parent.__annotations__.items():
+                annotations[k] = v
+            parent = parent.__base__
+        return annotations
+
+    @classmethod
     def get_need_attr(cls):
         parent = cls
         attrs = []
@@ -89,8 +104,10 @@ class BaseModel:
         obj = {}
         for key in self.get_all_keys():
             val = getattr(self, key)
-            if getattr(self.__annotations__, key, None) != None and type(val) != getattr(self.__annotations__, key, None):
-                target_type = getattr(self.__annotations__, key, None)
+            if val == None:
+                continue
+            if self.__annotations__.get(key, None) != None and type(val) != self.__annotations__.get(key, None):
+                target_type = self.__annotations__.get(key, None)
                 real_type = type(val)
                 if target_type == str:
                     val = str(val)
@@ -98,8 +115,10 @@ class BaseModel:
                     val = int(val)
                 elif target_type == list:
                     val = [val]
+                elif target_type == datetime:
+                    val = dateparser.parse(val)
                 else:
-                    raise TypeError()
+                    raise TypeError(f"target type is {target_type.__name__} but real type is {real_type.__name__}")
             obj[key] = val
         return obj
 

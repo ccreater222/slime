@@ -1,6 +1,9 @@
 import os
 from importlib import import_module
-from typing import List
+from typing import  List
+
+from pymongo.cursor import Cursor 
+from pymongo.typings import _DocumentType
 from plugins import *
 from inspect import getmembers,isclass
 from .stage_model import *
@@ -15,23 +18,24 @@ class InputFilter:
         self._filter = filter
         self._model = model
         self._task_id = task_id
-    # TODO: sort page tatal
-    def filter(self)->List[BaseModel]:
         client = db_resource
         if self._model == PocScanModel:
             client = db_vuldata
+        self.client = client
+    
+    def _get_condition(self):
         condition = {}
         all_keys = get_all_stage_model_keys()
 
-        if self._filter.get('columes',[]) != []:
+        if self._filter.get('columns',[]) != []:
             for k in self._model.get_need_attr():
-                if k not in self._filter.get('columes',[]):
+                if k not in self._filter.get('columns',[]):
                     raise TypeError()
 
         for key in all_keys:
-            if key in ['info', 'created']:
+            if key in ['info', 'created', 'updated']:
                 continue
-            if key not in self._filter.get('columes',[]) and self._filter.get('columes',[]) != []:
+            if key not in self._filter.get('columns',[]) and self._filter.get('columns',[]) != []:
                 condition[key] = {'$exists': False}
 
         for k,v in self._filter.get('condition', {}).items():
@@ -43,7 +47,7 @@ class InputFilter:
             if k == 'finger' or k == 'tag':
                 condition[k] = {'$all': [v]}
             elif k == 'port':
-                condition[k] = int(k)
+                condition[k] = int(v)
             elif k == 'updated':
                 continue
             else:
@@ -60,23 +64,55 @@ class InputFilter:
                     continue
                 objid_arrays.append(hex_objid(val))
             condition['_id'] = {"$in": objid_arrays}
+        result = {}
         if self._task_id == '' or self._task_id == None:
-            resources = client.find(condition)
+            result = condition
         else:
-            columes = {}
+            columns = {}
             keys = self._model.get_need_attr()
             for k in keys:
-                columes[k] = {'$exists': True}
-            columes['taskid'] = self._task_id
-            resources = client.find({'$or': [condition, columes]})
+                columns[k] = {'$exists': True}
+            columns['taskid'] = self._task_id
+            result = {'$or': [condition, columns]}
+        return result
+
+
+    def filter(self)->List[BaseModel]:
+        resources = self._filter_func()
         # how to convert resources to Model
+        return self.cursor_to_model(resources)
+    def cursor_to_model(self, resources):
         result = []
         for i in resources:
             try:
                 result.append(self._model(**i))
             except Exception as e:
-                print(i)
+                print(e)
         return result
+    def filter_by_page(self) -> list:
+        page = self._filter.get('page', 1)
+        size = self._filter.get('size',20)
+        
+        resources = self._filter_func()
+        condition = self._get_condition()
+        total = self.client.count_documents(condition)
+        skip_num = (page - 1) * size
+        resources = resources.skip(skip_num).limit(size)
+        return [self.cursor_to_model(resources), total, size, page]
+
+    # TODO: sort page tatal
+    def _filter_func(self)->Cursor[_DocumentType]:
+        self.client = db_resource
+        resources = self.client.find(self._get_condition())
+        sort_key = self._filter.get('sort', "")
+        desc = self._filter.get('desc', False)
+        if sort_key != "":
+            index = 1
+            if desc == True:
+                index = -1
+            resources = resources.sort([(sort_key, index)])
+        return resources
+
 
 class PluginConfig:
 
