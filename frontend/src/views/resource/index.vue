@@ -65,7 +65,7 @@
           <template v-if="(scope.row[column] instanceof Array)">
             <el-tag
               v-for="tag in scope.row[column]"
-              :key="tag+column"
+              :key="guidGenerator()"
               type="primary"
               size="mini"
               disable-transitions
@@ -164,10 +164,10 @@
       <el-card class="box-card">
         <div slot="header" class="clearfix">
           <el-steps :active="taskstep" align-center>
-            <el-step v-for="stagename in Object.keys(stage)" :key="stagename" :title="stage[stagename].display" />
+            <el-step v-for="stagename in stagelist" :key="stagename" :title="stage[stagename].display" />
           </el-steps>
         </div>
-        <el-row v-for="stagename in Object.keys(plugins)" v-show="stagename === Object.keys(plugins)[taskstep]" :key="stagename">
+        <el-row v-for="stagename in stagelist" v-show="stagename === Object.keys(plugins)[taskstep]" :key="stagename">
           <el-col :span="6">
             <el-table empty-text="请选中插件" size="small" :show-header="false" :data="selectedplugins[stagename]">
               <el-table-column align="center" label="插件">
@@ -241,6 +241,7 @@ export default {
     getplugins().then(data => {
       this.$data.stage = data.data.stage
       this.$data.plugins = data.data.plugins
+      this.$data.stagelist = data.data.stagelist
       Object.keys(this.$data.stage).forEach(k => {
         this.$data.selectedplugins[k] = []
         this.$data.pluginsconfig[k] = {}
@@ -276,7 +277,8 @@ export default {
       desc: false,
       analyzeDialogFormVisible: false,
       taskDialogFormVisible: false,
-      stage: []
+      stage: [],
+      stagelist: []
     }
   },
   computed: {
@@ -295,6 +297,9 @@ export default {
       // TODO: unique value for smallest value
       this.callGetResource({}).then(data => {
         this.$data.tableData = data.data.columndatas
+        this.$data.page = data.page
+        this.$data.total = data.total
+        this.currentpage = 1
         this.formThead = this.formTheadOptions.filter(i => valArr.indexOf(i) >= 0)
         this.key = this.key + 1
       })
@@ -389,6 +394,9 @@ export default {
       this.$data.size = size
       this.callGetResource({}).then(data => {
         this.$data.tableData = data.data.columndatas
+        if (this.$data.currentpage > data.page) {
+          this.$data.currentpage = 1
+        }
       })
     },
     handleCurrentChange: function(page) {
@@ -398,7 +406,7 @@ export default {
       })
     },
     handleFilter: function(value) {
-      this.refresh()
+      this.refresh({ page: 1 })
     },
     handleCreate: function() {
       this.$data.isupdate = false
@@ -419,6 +427,7 @@ export default {
     },
     handleReset: function() {
       this.$data.listQuery = {}
+      this.handleFilter()
     },
     handleEdit: function() {
       this.$data.isupdate = true
@@ -440,7 +449,7 @@ export default {
         this.download(downloaddata)
         this.$data.downloadDialogFormVisible = false
       } else {
-        this.callGetResource({})
+        this.callGetResource({ page: -1, size: -1 })
           .then(data => {
             this.download(data.data.columndatas)
             this.$data.downloadDialogFormVisible = false
@@ -547,7 +556,7 @@ export default {
             message: '导入成功',
             type: 'success'
           })
-          this.refresh()
+          this.refresh({})
         } else {
           this.$notify({
             title: '失败',
@@ -567,9 +576,14 @@ export default {
         })
       return false
     },
-    refresh: function() {
-      this.callGetResource({}).then(data => {
+    refresh: function(data) {
+      this.callGetResource(data).then(data => {
         this.$data.tableData = data.data.columndatas
+        this.$data.page = data.page
+        this.$data.total = data.total
+        if (this.$data.currentpage > data.page) {
+          this.$data.currentpage = 1
+        }
         // this.key = this.key + 1
       })
     },
@@ -612,6 +626,19 @@ export default {
             message: '删除成功!',
             title: '提示'
           })
+          if (this.selectall) {
+            this.tableData = []
+            this.total = 0
+          } else {
+            this.tableData = this.tableData.filter(v => {
+              // for (var i = 0; i < this.selected.length; i++) {
+              //   if (v['id'] === this.selected[i]['id']) {
+              //     return false
+              //   }
+              // }
+              return this.selected.indexOf(v) === -1
+            })
+          }
         })
       }).catch(() => {
         this.$notify({
@@ -624,7 +651,7 @@ export default {
     sortHandler: function(data) {
       this.$data.sort = data.column.label
       this.$data.desc = data.order === 'descending'
-      this.refresh()
+      this.refresh({})
     },
     handlePerEdit: function(index, row) {
       this.$data.temp = row
@@ -701,6 +728,12 @@ export default {
       this.$nextTick(() => {
         tab.$children[0].resize()
       })
+    },
+    guidGenerator: function() {
+      var S4 = function() {
+        return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1)
+      }
+      return (S4() + S4() + '-' + S4() + '-' + S4() + '-' + S4() + '-' + S4() + S4() + S4())
     }
   }
 }

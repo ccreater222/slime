@@ -28,7 +28,7 @@
             <el-table-column label="plugin" prop="plugin" />
             <el-table-column label="tag" show-overflow-tooltip>
               <template slot-scope="scope">
-                <el-tag v-for="tag in scope.row.tag" :key="tag" size="mini" style="margin-left: 10px;">
+                <el-tag v-for="tag in scope.row.tag" :key="guidGenerator()" size="mini" style="margin-left: 10px;">
                   {{ tag }}
                 </el-tag>
               </template>
