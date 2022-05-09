@@ -8,7 +8,9 @@ import math
 from util.util import hex_objid, objid_hex
 
 def query_resource():
-    result = {'columns': get_all_stage_model_keys(), 'columndatas': []}
+    all_keys = ['id', 'name', 'topdomain', 'subdomain', 'iscdn', 'ip', 'port', 'service', 'tag', 'finger', 'updated', 'taskid']
+    
+    result = {'columns': all_keys, 'columndatas': []}
     form = request.get_json()
     if form.get('columns', []) != []:
         result['columns'] = form.get('columns')
@@ -25,6 +27,9 @@ def query_resource():
 def create_resource():
     form = request.get_json()
     for item in form.get('data', []):
+        if item.get('id', None) != None:
+            item["_id"] = item["id"]
+            del item["id"]
         model = BaseModel(**item)
         model.save()
     resp = SuccessResponse({}, 0, 0, 0, 0)

@@ -1,6 +1,8 @@
 import os
 from importlib import import_module
 from typing import  List
+import re
+from dateutil import parser
 
 from pymongo.cursor import Cursor 
 from pymongo.typings import _DocumentType
@@ -38,6 +40,8 @@ class InputFilter:
             if key not in self._filter.get('columns',[]) and self._filter.get('columns',[]) != []:
                 condition[key] = {'$exists': False}
 
+
+
         for k,v in self._filter.get('condition', {}).items():
             if v.strip() == '' or not k in all_keys:
                 continue
@@ -49,9 +53,12 @@ class InputFilter:
             elif k == 'port':
                 condition[k] = int(v)
             elif k == 'updated':
-                continue
+                try:
+                    condition[k] = parser.parse(v)
+                except:
+                    pass
             else:
-                condition[k] = v
+                condition[k] = re.compile(re.escape(v))
         
         if self._filter.get('selected', []) == []:
             self._filter['selectall'] = True
@@ -92,12 +99,12 @@ class InputFilter:
     def filter_by_page(self) -> list:
         page = self._filter.get('page', 1)
         size = self._filter.get('size',20)
-        
         resources = self._filter_func()
         condition = self._get_condition()
         total = self.client.count_documents(condition)
-        skip_num = (page - 1) * size
-        resources = resources.skip(skip_num).limit(size)
+        if page > 0 and size > 0:
+            skip_num = (page - 1) * size
+            resources = resources.skip(skip_num).limit(size)
         return [self.cursor_to_model(resources), total, size, page]
 
     # TODO: sort page tatal
@@ -282,3 +289,4 @@ def load_plugins():
                 plugin_info = load_plugin(entry.name)
                 PLUGIN_LIST[plugin_info['name']] = plugin_info
                 
+load_plugins()

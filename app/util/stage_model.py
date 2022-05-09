@@ -118,7 +118,7 @@ class BaseModel:
                 elif target_type == datetime:
                     val = dateparser.parse(val)
                 else:
-                    raise TypeError(f"target type is {target_type.__name__} but real type is {real_type.__name__}")
+                    raise TypeError(f"target type is {target_type.__name__} but real type is {real_type.__name__}({key}:{val})")
             obj[key] = val
         return obj
 
