@@ -167,7 +167,7 @@
             <el-step v-for="stagename in stagelist" :key="stagename" :title="stage[stagename].display" />
           </el-steps>
         </div>
-        <el-row v-for="stagename in stagelist" v-show="stagename === Object.keys(plugins)[taskstep]" :key="stagename">
+        <el-row v-for="stagename in stagelist" v-show="stagename === stagelist[taskstep]" :key="stagename">
           <el-col :span="6">
             <el-table empty-text="请选中插件" size="small" :show-header="false" :data="selectedplugins[stagename]">
               <el-table-column align="center" label="插件">
@@ -195,7 +195,7 @@
           <el-button type="primary" @click="taskstep>0?taskstep--:0">上一步</el-button>
         </el-col>
         <el-col :span="2">
-          <el-button type="primary" @click="taskstep<Object.keys(stage).length-1?taskstep++:Object.keys(stage).length-1">下一步</el-button>
+          <el-button type="primary" @click="taskstep<stagelist.length-1?taskstep++:stagelist.length-1">下一步</el-button>
         </el-col>
         <el-col :span="2">
           <el-button type="primary" @click="submitTask">完成</el-button>
@@ -378,7 +378,7 @@ export default {
     },
     selectplugin: function(val) {
       val = JSON.parse(val)[1]
-      var stagename = Object.keys(this.$data.stage)[this.taskstep]
+      var stagename = this.stagelist[this.taskstep]
       var index = this.$data.selectedplugins[stagename].indexOf(val)
       if (index === -1) {
         this.$data.selectedplugins[stagename].push(val)
