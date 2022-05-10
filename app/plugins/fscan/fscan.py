@@ -11,7 +11,7 @@ import requests
 class FscanPlugin(BasePlugin):
     stagelist = ['port_detect','service_detect','poc_scan','final_step']
     @staticmethod
-    def isintstall():
+    def isinstall():
         current_dir = os.path.dirname(__file__)
         if platform.system() == 'Windows':
             return os.path.exists(os.path.join(current_dir,'resource','fscan.exe'))

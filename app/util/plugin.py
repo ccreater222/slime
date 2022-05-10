@@ -3,6 +3,7 @@ from importlib import import_module
 from typing import  List
 import re
 from dateutil import parser
+import sys
 
 from pymongo.cursor import Cursor 
 from pymongo.typings import _DocumentType
@@ -10,7 +11,7 @@ from plugins import *
 from inspect import getmembers,isclass
 from .stage_model import *
 from util.util import get_all_keys, hex_objid
-from util.client import db_config
+from util.client import db_config, db_task
 
 STAGE_LIST = ["info_collect","topdomain_collect","subdomain_collect","ip_info","port_detect","service_detect","fingerprint_detect","poc_scan","final_step"]
 PLUGIN_LIST = {}
@@ -32,7 +33,7 @@ class InputFilter:
         if self._filter.get('columns',[]) != []:
             for k in self._model.get_need_attr():
                 if k not in self._filter.get('columns',[]):
-                    raise TypeError()
+                    raise TypeError(f'{self._model.__name__} need {",".join(self._model.get_need_attr())} but only {k} is not given')
 
         for key in all_keys:
             if key in ['info', 'created', 'updated']:
@@ -169,25 +170,23 @@ class BasePlugin:
     stagelist = []
     config:PluginConfig = None
     task_id = ''
+    stage = ''
 
     _slime_config = None
     _slime_name = ''
 
     def __init__(self) -> None:
-        pass
+        if not self.__class__.isinstall():
+            self.__class__.install()
     # stage: 运行阶段
     # filter: 数据库过滤条件
     # task_id: 用于选择上个阶段新发现的资产 ,根据时间来过滤后来添加的数据
     # TODO : 
-    def save_log(log: str) -> None:
-        pass
+    def save_log(self, log: str) -> None:
+        db_task.update_one({"taskid": self.task_id}, {"$push": {f"log.{self.stage}.{self._slime_name}": log}})
 
     @classmethod
     def dispatch(cls, stage, filter, task_id):
-        # is install
-        if  not cls.isintstall():
-            cls.install()
-
         # init instance
         instance = cls()
         cls.task_id = task_id
@@ -196,6 +195,7 @@ class BasePlugin:
         config.load_from_database(stage, task_id)
         config.apply_config()
         instance.config = config
+        instance.stage = stage
 
         # load target
         filter_instance = InputFilter(filter, instance.getmodel(stage).__base__,task_id)
@@ -252,8 +252,11 @@ def load_plugin(name):
     plugin_clazz = None
     config_clazz = None
     description = None
-
-    module = import_module(f'plugins.{name}.{name}')
+    modulename = f'plugins.{name}.{name}'
+    if modulename not in sys.modules:
+        module = import_module(modulename)
+    else:
+        module = sys.modules[modulename]
     classes = getmembers(module, isclass)
     for clazzname,clazz in classes:
         if BasePlugin != clazz and issubclass(clazz,BasePlugin):
@@ -261,9 +264,13 @@ def load_plugin(name):
             plugin_clazz._slime_name = name
             
     # load config
-    module = import_module(f'plugins.{name}.config')
+    modulename = f'plugins.{name}.config'
+    if modulename not in sys.modules:
+        module = import_module(modulename)
+    else:
+        module = sys.modules[modulename]
     classes = getmembers(module,isclass)
-    description = module.description
+    description = getattr(module, "description", "")
     for clazzname,clazz in classes:
         if clazz != PluginConfig and issubclass(clazz,PluginConfig):
             config_clazz = clazz
@@ -288,5 +295,5 @@ def load_plugins():
             if not entry.name.startswith('.') and not entry.name.startswith('_') and entry.is_dir():
                 plugin_info = load_plugin(entry.name)
                 PLUGIN_LIST[plugin_info['name']] = plugin_info
-                
-load_plugins()
+
+

@@ -1,5 +1,5 @@
 from util.plugin import InputFilter
-from util.stage_model import BaseModel, FinalStepModel, get_all_stage_model_keys
+from util.stage_model import BaseModel, FinalStepModel, FingerprintDetectModel, IpInfoModel, ServiceDetectModel, get_all_stage_model_keys
 from util.response import SuccessResponse
 from util.client import db_resource
 from flask import request
@@ -58,3 +58,83 @@ def update_resource():
 
     resp = SuccessResponse({}, 0, 0, 0, 0)
     return resp.toDict()
+
+def analyze_resource():
+    form = request.get_json()
+    form['columns'] = get_all_stage_model_keys()
+    target = form.get("target", "cidr")
+    limit = form.get("limit", -1)
+
+
+    result = []
+    analyze = {}
+    if target == "cidr" :
+        input_filter = InputFilter(form, IpInfoModel, '')
+        models = input_filter.filter()
+        for model in models:
+            model = model.toDict()
+            ip = model.get("ip", None)
+            if ip == None:
+                continue
+            # only ipv4 TODO add ipv6
+            ip = ip.split(".")
+            ip.pop()
+            cidr = ".".join(ip) + ".*"
+            if analyze.get(cidr, None) == None:
+                if limit != -1 and len(analyze.keys()) > limit:
+                    continue
+                analyze[cidr] = 0
+            analyze[cidr] += 1
+    
+    if target == "tags":
+        input_filter = InputFilter(form, BaseModel, '')
+        models = input_filter.filter()
+        for model in models:
+            model = model.toDict()
+            tag = model.get("tag", None)
+            if tag == None:
+                continue
+            for t in tag:
+                if analyze.get(t, None) == None:
+                    if limit != -1 and len(analyze.keys()) > limit:
+                        continue
+                    analyze[t] = 0
+                analyze[t] += 1
+        
+    if target == "services":
+        input_filter = InputFilter(form, ServiceDetectModel, '')
+        models = input_filter.filter()
+        for model in models:
+            model = model.toDict()
+            service = model.get("service", None)
+            if service == None:
+                continue
+            if analyze.get(service, None) == None:
+                if limit != -1 and len(analyze.keys()) > limit:
+                    continue
+                analyze[service] = 0
+            analyze[service] += 1
+    
+    if target == "fingerprints":
+        input_filter = InputFilter(form, FingerprintDetectModel, '')
+        models = input_filter.filter()
+        for model in models:
+            model = model.toDict()
+            fingerprint = model.get("finger", [])
+            for fp in fingerprint:
+                if analyze.get(fp, None) == None:
+                    if limit != -1 and len(analyze.keys()) > limit:
+                        continue
+                    analyze[fp] = 0
+                analyze[fp] += 1
+
+
+
+    # format
+    for k,v in analyze.items():
+        result.append({"name": k, "value": v})
+    
+    resp = SuccessResponse(result, 0, 0, 0, 0)
+    return resp.toDict()
+
+        
