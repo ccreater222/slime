@@ -176,7 +176,7 @@ export default {
     this.callGetTask({}).then(data => {
       this.$data.tasklist = data.data.tasklist
       this.$data.taskcolumn = data.data.taskcolumn
-      this.$data.total = data.data.total
+      this.$data.total = data.total
     })
   },
   methods: {
@@ -208,6 +208,7 @@ export default {
                 'stop': '停止'
               }[action]
             })
+            this.refresh()
           } else {
             this.$notify(
               {
@@ -219,6 +220,16 @@ export default {
           }
         }
       )
+    },
+    refresh() {
+      this.callGetTask({
+        page: this.$data.page,
+        size: this.$data.size
+      }).then(data => {
+        this.$data.tasklist = data.data.tasklist
+        this.$data.taskcolumn = data.data.taskcolumn
+        this.$data.total = data.total
+      })
     },
     handleCurrentChange(page) {
       this.$data.currentpage = page
