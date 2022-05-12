@@ -30,7 +30,14 @@ def dashboard():
     result['comparedata']['vul'] = tmp[1]
 
     # task
-    tmp = countdata(db_task)
+    tmp = [db_task.count_documents({}), []]
+    now = datetime.now()
+    yestoday = now - timedelta(days=1)
+    for i in range(7):
+        num = db_task.count_documents({'created': {'$gte': yestoday, '$lt': now}})
+        tmp[1].insert(0, num)
+        now = yestoday
+        yestoday = now - timedelta(days=1)
     result['countdata']['task'] = tmp[0]
     result['comparedata']['task'] = tmp[1]
 

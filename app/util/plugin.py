@@ -163,6 +163,13 @@ class PluginConfig:
 
     def apply_config(self):
         raise NotImplementedError()
+    
+    def toDict(self):
+        keys = self.get_all_keys()
+        result = {}
+        for k in keys:
+            result[k] = getattr(self, k)
+        return result
 
 # TODO: 排除当前任务插入的数据，排除同时运行任务插入的数据，根据created?
 class BasePlugin:

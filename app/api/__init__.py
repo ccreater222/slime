@@ -1,6 +1,6 @@
 from flask import Blueprint
 from .dashboard import dashboard
-from .task import task_query,task_create
+from .task import task_action, task_query,task_create
 from .vuldata import vuldata_query
 from .resource import delete_resource, query_resource, create_resource, update_resource, analyze_resource
 from .plugins import query_plugins
@@ -21,4 +21,4 @@ app_bp.add_url_rule('/analyze/resource', None, analyze_resource, methods = ['POS
 # task
 
 app_bp.add_url_rule('/plugins', None, query_plugins, methods = ['GET'])
-app_bp.add_url_rule('/create/task', None, task_create, methods = ['POST'])
+app_bp.add_url_rule('/<action>/task', None, task_action, methods=['POST'])
