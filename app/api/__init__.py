@@ -1,4 +1,6 @@
 from flask import Blueprint
+
+from api.service import query_service
 from .dashboard import dashboard
 from .task import task_action, task_query,task_create
 from .vuldata import vuldata_query
@@ -22,3 +24,7 @@ app_bp.add_url_rule('/analyze/resource', None, analyze_resource, methods = ['POS
 
 app_bp.add_url_rule('/plugins', None, query_plugins, methods = ['GET'])
 app_bp.add_url_rule('/<action>/task', None, task_action, methods=['POST'])
+
+# service
+
+app_bp.add_url_rule('/service', None, query_service, methods = ['POST'])

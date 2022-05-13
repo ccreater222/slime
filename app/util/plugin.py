@@ -36,7 +36,7 @@ class InputFilter:
                     raise TypeError(f'{self._model.__name__} need {",".join(self._model.get_need_attr())} but only {k} is not given')
 
         for key in all_keys:
-            if key in ['info', 'created', 'updated']:
+            if key in ['info', 'created', 'updated', '_id']:
                 continue
             if key not in self._filter.get('columns',[]) and self._filter.get('columns',[]) != []:
                 condition[key] = {'$exists': False}

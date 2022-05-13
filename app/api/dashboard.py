@@ -8,7 +8,7 @@ def countdata(client):
     now = datetime.now()
     yestoday = now - timedelta(days=1)
     for i in range(7):
-        num = client.count_documents({'updated': {'$gte': yestoday, '$lt': now}})
+        num = client.count_documents({'created': {'$gte': yestoday, '$lt': now}})
         result[1].insert(0, num)
         now = yestoday
         yestoday = now - timedelta(days=1)
@@ -30,14 +30,7 @@ def dashboard():
     result['comparedata']['vul'] = tmp[1]
 
     # task
-    tmp = [db_task.count_documents({}), []]
-    now = datetime.now()
-    yestoday = now - timedelta(days=1)
-    for i in range(7):
-        num = db_task.count_documents({'created': {'$gte': yestoday, '$lt': now}})
-        tmp[1].insert(0, num)
-        now = yestoday
-        yestoday = now - timedelta(days=1)
+    tmp = countdata(db_task)
     result['countdata']['task'] = tmp[0]
     result['comparedata']['task'] = tmp[1]
 
