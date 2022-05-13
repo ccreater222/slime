@@ -169,7 +169,7 @@ export default {
     sortHandler: function(data) {
       this.$data.sort = data.column.label
       this.$data.desc = data.order === 'descending'
-      this.refresh()
+      this.refresh({ page: this.page })
     },
     handleSizeChange: function(size) {
       this.$data.size = size
@@ -183,14 +183,18 @@ export default {
         this.$data.tableData = data.data.columndatas
       })
     },
-    refresh: function() {
-      this.callGetService({}).then(data => {
+    refresh: function(data) {
+      this.callGetService(data).then(data => {
         this.$data.tableData = data.data.columndatas
-        // this.key = this.key + 1
+        this.$data.page = data.page
+        this.$data.total = data.total
+        if (this.$data.currentpage > data.page) {
+          this.$data.currentpage = 1
+        }
       })
     },
     handleFilter: function(value) {
-      this.refresh()
+      this.refresh({ page: this.page })
     }
   }
 }
