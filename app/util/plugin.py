@@ -213,6 +213,7 @@ class BasePlugin:
 
         list(map(lambda x:x.save(),result))
 
+
     @staticmethod
     def getmodel(stage):
         stage = stage.replace('_', '')

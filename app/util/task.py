@@ -4,13 +4,15 @@
 from datetime import datetime
 from enum import Enum
 import uuid
-from util.client import db_task
+from util.client import db_task, db_taskstruct, celery_app
 from util.plugin import PLUGIN_LIST
 import re
 from dateutil import parser
 import dateutil
 
+
 from util.util import get_all_keys
+from worker.task import workflow
 
 class Taskstatus(Enum):
     wait="wait"
@@ -110,4 +112,46 @@ class Task:
         for key in keys:
             result[key] = getattr(self, key)
         return result
+    
+    def start(self):
+        if db_taskstruct.count_documents({"taskid": self.taskid}) == 1:
+            process = db_taskstruct.find_one({"taskid": self.taskid})
+            new_stageinfo = {}
+            start = False
+            for k, v in self.stageinfo.items():
+                if k == process["stage"]:
+                    start = True
+                    plugin_index = v.index(process["plugin"])
+                    new_stageinfo[k] = v[plugin_index:]
+                    continue
+                if not start :
+                    continue
+                new_stageinfo[k] = v
+            workflow.delay(self.taskid, self.stageinfo, self.filter).ignore()
+        else:
+            workflow.delay(self.taskid, self.stageinfo, self.filter).ignore()
+
+    def kill_all_subtask(self):
+        process = db_taskstruct.find_one({"taskid": self.taskid})
+        if process.get("stage", "") == "" or process.get("plugin", "") == "":
+            return
+        for celery_task_id in process.get("tasks", []):
+            try:
+                celery_app.control.revoke(celery_task_id)
+            except Exception:
+                pass
+
+    def pause(self):
+        self.kill_all_subtask()
+        db_task.update_one({"taskid": self.taskid}, {"$set": {"status": Taskstatus.wait.value}})
+    
+    def restart(self):
+        self.kill_all_subtask()
+        db_taskstruct.delete_one({"taskid": self.taskid})
+        self.start()
+    
+    def stop(self):
+        self.kill_all_subtask()
+        db_task.delete_one({"taskid": self.taskid})
+            
 
