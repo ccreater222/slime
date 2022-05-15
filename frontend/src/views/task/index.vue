@@ -41,7 +41,7 @@
                     <el-collapse-item title="日志面板" name="Log">
                       <el-tabs tab-position="left">
                         <el-tab-pane v-for="plugin in Object.keys(scope.row.log[stagename])" :key="plugin" :label="plugin">
-                          <el-input :value="scope.row.log[stagename][plugin]" type="textarea" autosize readonly />
+                          <el-input :autosize="{ minRows: 0, maxRows: 15}" :value="scope.row.log[stagename][plugin] instanceof Array ?scope.row.log[stagename][plugin].join('\r\n'):scope.row.log[stagename][plugin]" type="textarea" readonly />
                         </el-tab-pane>
                       </el-tabs>
                     </el-collapse-item>
@@ -50,7 +50,7 @@
                         <el-tab-pane v-for="plugin in scope.row.stageinfo[stagename]" :key="plugin.name" :label="plugin.name">
                           <el-form :model="plugin.config" label-position="left" label-width="auto">
                             <el-form-item v-for="configname in Object.keys(plugin.config)" :key="configname" :label="configname">
-                              <el-input v-model="plugin.config[configname]" readonly />
+                              <el-input :value="plugin.config[configname].toString()" readonly />
                             </el-form-item>
                           </el-form>
                         </el-tab-pane>
