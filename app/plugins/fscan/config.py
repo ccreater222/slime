@@ -7,16 +7,20 @@ description = {
     'proxy': 'proxy'
 }
 class FscanConfig(PluginConfig):
-    noping=False
+    noping='false'
     _proxy=''
     @property
     def proxy(self):
         if self._proxy == '':
-            return "global proxy setting"
+            return ""
         return self._proxy
     @proxy.setter
     def proxy(self,_proxy):
         self._proxy = _proxy
     
     def apply_config(self):
-        pass
+        args = []
+        if self.noping.lower() == 'true':
+            args.append('-np')
+        
+        return args

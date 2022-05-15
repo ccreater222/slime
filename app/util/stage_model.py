@@ -89,7 +89,12 @@ class BaseModel:
         while True:
             if parent == BaseModel:
                 break
+
             attrs = attrs + list(parent.__annotations__.keys())
+            try:
+                attrs.remove('_id')
+            except:
+                pass
             parent = parent.__base__
         return attrs
     @classmethod
@@ -117,6 +122,12 @@ class BaseModel:
                     val = [val]
                 elif target_type == datetime:
                     val = dateparser.parse(val)
+                elif target_type == bool:
+                    if type(val) == str:
+                        if val.lower() == "true":
+                            val = True
+                        else:
+                            val = False
                 else:
                     raise TypeError(f"target type is {target_type.__name__} but real type is {real_type.__name__}({key}:{val})")
             obj[key] = val

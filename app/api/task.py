@@ -4,22 +4,20 @@ from util.task import Task, Taskstatus
 from util.response import SuccessResponse
 from util.client import db_task
 from flask import request
-import uuid
-
-
-
 def task_action(action):
     form = request.get_json()
     if action == "create":
         return task_create()
     elif action in ["start", "pause", "restart"]:
+        tasks = Task.load_all(form)
         if action == "start":
             new_status = Taskstatus.execute.value
         elif action == "pause":
             new_status = Taskstatus.wait.value
         elif action == "restart":
             new_status = Taskstatus.execute.value
-        tasks = Task.load_all(form)
+        for task in tasks:
+            getattr(task, action)()
         taskids = map(lambda x: x.taskid, tasks)
         db_task.update_many({"taskid": {"$in": list(taskids)}}, {"$set": {"status": new_status}})
         return SuccessResponse({}, 0,0,0,0).toDict()

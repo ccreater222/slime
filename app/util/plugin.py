@@ -4,17 +4,22 @@ from typing import  List
 import re
 from dateutil import parser
 import sys
+import traceback
+
 
 from pymongo.cursor import Cursor 
 from pymongo.typings import _DocumentType
 from plugins import *
 from inspect import getmembers,isclass
+
+from util.logging import getlogger
 from .stage_model import *
 from util.util import get_all_keys, hex_objid
 from util.client import db_config, db_task
 
 STAGE_LIST = ["info_collect","topdomain_collect","subdomain_collect","ip_info","port_detect","service_detect","fingerprint_detect","poc_scan","final_step"]
 PLUGIN_LIST = {}
+logger = getlogger(__name__)
 class InputFilter:
     
     def __init__(self, filter, model,task_id):
@@ -194,24 +199,27 @@ class BasePlugin:
 
     @classmethod
     def dispatch(cls, stage, filter, task_id):
-        # init instance
         instance = cls()
-        cls.task_id = task_id
-        # load config
-        config = cls._slime_config()
-        config.load_from_database(stage, task_id)
-        config.apply_config()
-        instance.config = config
-        instance.stage = stage
+        try:
+            # init instance
+            cls.task_id = task_id
+            # load config
+            config = cls._slime_config()
+            config.load_from_database(stage, task_id)
+            config.apply_config()
+            instance.config = config
+            instance.stage = stage
 
-        # load target
-        filter_instance = InputFilter(filter, instance.getmodel(stage).__base__,task_id)
-
-        # run
-        result = getattr(instance,stage)(filter_instance.filter())
-        # save result
-
-        list(map(lambda x:x.save(),result))
+            # load target
+            filter_instance = InputFilter(filter, instance.getmodel(stage).__base__,task_id)
+            # run
+            result = getattr(instance,stage)(filter_instance.filter())
+            # save result
+            
+            list(map(lambda x:x.save(),result))
+        except Exception as e:
+            instance.save_log(traceback.format_exc())
+            raise e
 
 
     @staticmethod

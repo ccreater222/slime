@@ -127,12 +127,14 @@ class Task:
                 if not start :
                     continue
                 new_stageinfo[k] = v
-            workflow.delay(self.taskid, self.stageinfo, self.filter).ignore()
+            workflow.delay(self.taskid, self.stageinfo, self.filter)
         else:
-            workflow.delay(self.taskid, self.stageinfo, self.filter).ignore()
+            workflow.delay(self.taskid, self.stageinfo, self.filter)
 
     def kill_all_subtask(self):
         process = db_taskstruct.find_one({"taskid": self.taskid})
+        if process == None:
+            return
         if process.get("stage", "") == "" or process.get("plugin", "") == "":
             return
         for celery_task_id in process.get("tasks", []):

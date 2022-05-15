@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from config.config import MONGODB_URL
 from celery import Celery
 from celery import Task
+from celery.signals import setup_logging
 
 mongo_client = MongoClient(MONGODB_URL)
 mongo_db = mongo_client.slime
@@ -24,3 +25,6 @@ celery_app = Celery(
     task_cls = SlimeTask
 )
 celery_app.config_from_object("config.celery")
+@setup_logging.connect
+def config_loggers(*args, **kwags):
+    pass

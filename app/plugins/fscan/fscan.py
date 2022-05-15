@@ -1,13 +1,18 @@
+import json
 import shutil
 import re
 import subprocess
 import os
 import platform
+
 from util.plugin import BasePlugin
 from typing import List
 from util.stage_model import FingerprintDetectModel, IpInfoModel, PocScanModel, PortDetectModel
 import requests
+from util.logging import getlogger
+import logging
 
+logger = getlogger(__name__)
 class FscanPlugin(BasePlugin):
     stagelist = ['port_detect','service_detect','poc_scan','final_step']
     @staticmethod
@@ -44,6 +49,7 @@ class FscanPlugin(BasePlugin):
         iplist = []
         for target in target_list:
             iplist.append(target.ip)
+        logger.debug(f"following ip is target: {', '.join(iplist)}")
         with open(os.path.join(temp_dir,ipfile),'w') as f:
             f.write('\n'.join(iplist))
         if platform.system() == 'Windows':
@@ -56,21 +62,26 @@ class FscanPlugin(BasePlugin):
         args.append('-o')
         args.append(os.path.join(temp_dir,outputfile))
         args.append('-nobr')
+        args = args + self.config.apply_config()
+        logger.debug(f"fscan command line: {' '.join(args)}")
         process = subprocess.run(args, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = process.stdout.decode('utf-8')
+        error = process.stderr.decode('utf-8')
         try:
             with open(os.path.join(temp_dir,outputfile),'r',encoding='utf-8') as f:
                 result = f.read()
+            self.save_log(output)
+            self.save_log(error)
             parsed = self.parse(result)
+            logger.debug(f"get result: {json.dumps(parsed)}")
             for ip in parsed['ports'].keys():
                 for port in parsed['ports'][ip]:
                     for target in target_list:
                         if target.ip == ip:
                             port_model.append(PortDetectModel.generate(target, int(port)))
                             break
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             pass
-        
         shutil.rmtree(temp_dir)
         return port_model
     @staticmethod

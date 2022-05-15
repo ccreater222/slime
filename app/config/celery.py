@@ -11,3 +11,4 @@ task_acks_late = True
 worker_prefetch_multiplier = 1
 task_queue_max_priority = 15
 broker_connection_timeout = 7200
+worker_hijack_root_logger = False

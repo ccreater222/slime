@@ -1,9 +1,10 @@
-from util.logging import ExceptionDecorator
 from flask import Flask
 from worker import cli_bp
 from api import app_bp
 from flask_cors import CORS
-import werkzeug
+from util import logging
+from util.client import celery_app
+from flask import cli
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -17,4 +18,5 @@ def handle_bad_request(e):
     return 'bad request!', 500
 
 if __name__ == "__main__":
-    app.run()
+    cli.main()
+    
