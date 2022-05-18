@@ -72,6 +72,8 @@ class BaseModel:
     
     @classmethod
     def get_all_annotations(cls):
+        if getattr(cls, '_all_annotations', None):
+            return getattr(cls, '_all_annotations')
         parent = cls
         annotations = {}
         while True:
@@ -80,10 +82,14 @@ class BaseModel:
             for k,v in parent.__annotations__.items():
                 annotations[k] = v
             parent = parent.__base__
+        setattr(cls,'_all_annotations', annotations)
         return annotations
 
     @classmethod
     def get_need_attr(cls):
+        if getattr(cls, '_all_attr', None):
+            return getattr(cls, '_all_attr')
+        
         parent = cls
         attrs = []
         while True:
@@ -96,6 +102,7 @@ class BaseModel:
             except:
                 pass
             parent = parent.__base__
+        setattr(cls, '_all_attr', attrs)
         return attrs
     @classmethod
     def generate(cls, model,*args, **kwargs):

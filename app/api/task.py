@@ -33,6 +33,7 @@ def task_query():
     # filter
     result = {'taskcolumn': ["taskid","stageinfo","status","log","created"], 'tasklist': []}
     total, tasks = Task.load_by_page(form)
+    
     for task in tasks:
         task_dict = task.toDict()
         configs = {}

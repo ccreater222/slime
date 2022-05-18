@@ -1,3 +1,4 @@
+import traceback
 from celery.result import AsyncResult
 from util.client import celery_app
 from util.plugin import PLUGIN_LIST
@@ -30,7 +31,7 @@ def workflow(taskid: str,stageinfo: dict, filter: dict) -> AsyncResult:
             try:
                 PLUGIN_LIST[plugin]['plugin'].dispatch(stagename, filter, taskid)
             except Exception as e:
-                logger.error(e)
+                logger.error(traceback.format_exc())
 
     logger.debug(f"task[{taskid}] after {(time.time() - start_time)} seconds complete")
     # remove task list

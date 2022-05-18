@@ -69,6 +69,7 @@ class Task:
             data = data.sort([(sort_key, index)])
         total = db_task.count_documents({})
         data = data.skip((filter.get('page') -1) * filter.get('size', 20)).limit(filter.get('size', 20))
+        data.sort([("created", -1)])
         result = []
         for item in data:
             result.append(cls(**item))

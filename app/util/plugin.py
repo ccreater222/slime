@@ -22,10 +22,10 @@ PLUGIN_LIST = {}
 logger = getlogger(__name__)
 class InputFilter:
     
-    def __init__(self, filter, model,task_id):
+    def __init__(self, filter, model, taskid):
         self._filter = filter
         self._model = model
-        self._task_id = task_id
+        self._taskid = taskid
         client = db_resource
         if self._model == PocScanModel:
             client = db_vuldata
@@ -37,6 +37,8 @@ class InputFilter:
 
         if self._filter.get('columns',[]) != []:
             for k in self._model.get_need_attr():
+                if k in ['updated', 'created']:
+                    continue
                 if k not in self._filter.get('columns',[]):
                     raise TypeError(f'{self._model.__name__} need {",".join(self._model.get_need_attr())} but only {k} is not given')
 
@@ -78,14 +80,14 @@ class InputFilter:
                 objid_arrays.append(hex_objid(val))
             condition['_id'] = {"$in": objid_arrays}
         result = {}
-        if self._task_id == '' or self._task_id == None:
+        if self._taskid == '' or self._taskid == None:
             result = condition
         else:
             columns = {}
             keys = self._model.get_need_attr()
             for k in keys:
                 columns[k] = {'$exists': True}
-            columns['taskid'] = self._task_id
+            columns['taskid'] = self._taskid
             result = {'$or': [condition, columns]}
         return result
 
@@ -100,7 +102,7 @@ class InputFilter:
             try:
                 result.append(self._model(**i))
             except Exception as e:
-                print(e)
+                pass
         return result
     def filter_by_page(self) -> list:
         page = self._filter.get('page', 1)
@@ -181,7 +183,7 @@ class BasePlugin:
 
     stagelist = []
     config:PluginConfig = None
-    task_id = ''
+    taskid = ''
     stage = ''
 
     _slime_config = None
@@ -192,31 +194,42 @@ class BasePlugin:
             self.__class__.install()
     # stage: 运行阶段
     # filter: 数据库过滤条件
-    # task_id: 用于选择上个阶段新发现的资产 ,根据时间来过滤后来添加的数据
+    # taskid: 用于选择上个阶段新发现的资产 ,根据时间来过滤后来添加的数据
     # TODO : 
     def save_log(self, log: str) -> None:
-        db_task.update_one({"taskid": self.task_id}, {"$push": {f"log.{self.stage}.{self._slime_name}": log}})
+        db_task.update_one({"taskid": self.taskid}, {"$push": {f"log.{self.stage}.{self._slime_name}": log}})
 
     @classmethod
-    def dispatch(cls, stage, filter, task_id):
+    def dispatch(cls, stage, filter, taskid):
         instance = cls()
         try:
             # init instance
-            cls.task_id = task_id
+            cls.taskid = taskid
             # load config
             config = cls._slime_config()
-            config.load_from_database(stage, task_id)
+            config.load_from_database(stage, taskid)
             config.apply_config()
             instance.config = config
             instance.stage = stage
 
             # load target
-            filter_instance = InputFilter(filter, instance.getmodel(stage).__base__,task_id)
+            # get model from stage function param
+            func = getattr(cls, stage, None)
+            if func == None:
+                raise NotImplementedError(f"{stage} has not been implemented")
+            func_annotations = getattr(BasePlugin, '__annotations__', None)
+            if func_annotations == None:
+                raise Exception('what happend?')
+            inputtype = func_annotations['target_list'].__args__[0]
+
+            filter_instance = InputFilter(filter, inputtype,taskid)
             # run
             result = getattr(instance,stage)(filter_instance.filter())
-            # save result
             
-            list(map(lambda x:x.save(),result))
+            # save result
+            for item in result:
+                item.taskid = taskid
+                item.save()
         except Exception as e:
             instance.save_log(traceback.format_exc())
             raise e
@@ -237,7 +250,7 @@ class BasePlugin:
     def isintstall():
         raise NotImplementedError()
 
-    def info_collect(self, target_list: List[InfoCollectModel])->List[InfoCollectModel]:
+    def info_collect(self, target_list: List[BaseModel])->List[InfoCollectModel]:
         raise NotImplementedError()
 
     def topdomain_collect(self,target_list: List[InfoCollectModel])->List[TopdomainCollectModel]:
@@ -258,10 +271,10 @@ class BasePlugin:
     def fingerprint_detect(self,target_list: List[ServiceDetectModel])->List[FingerprintDetectModel]:
         raise NotImplementedError()
     
-    def poc_scan(self,target_list: List[FingerprintDetectModel])->List[PocScanModel]:
+    def poc_scan(self,target_list: List[PortDetectModel])->List[PocScanModel]:
         raise NotImplementedError()
     
-    def final_step(self,target_list: List[PocScanModel])->List[FinalStepModel]:
+    def final_step(self,target_list: List[BaseModel])->List[FinalStepModel]:
         raise NotImplementedError()
 
 def load_plugin(name):    
