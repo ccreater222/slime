@@ -40,7 +40,7 @@ class FscanPlugin(BasePlugin):
             f.write(r.content)
     
     def poc_scan(self, target_list: List[FingerprintDetectModel]) -> List[PocScanModel]:
-        port_model = []
+        poc_model = []
         temp_dir = os.path.join(os.path.dirname(__file__),'resource','tmp',self.taskid)
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)
@@ -52,8 +52,11 @@ class FscanPlugin(BasePlugin):
         for target in target_list:
             iplist.append(target.ip)
             portlist.append(str(target.port))
+        iplist = list(set(iplist))
+        portlist = list(set(portlist))
         with open(os.path.join(temp_dir,ipfile),'w') as f:
             f.write('\n'.join(iplist))
+        logger.debug(f"ports: {','.join(portlist)}")
         with open(os.path.join(temp_dir,portfile), 'w') as f:
             f.write('\n'.join(portlist))
         if platform.system() == 'Windows':
@@ -64,7 +67,7 @@ class FscanPlugin(BasePlugin):
         args.append('-hf')
         args.append(os.path.join(temp_dir,ipfile))
         args.append('-portf')
-        args.append(os.path.join(temp_dir, ipfile))
+        args.append(os.path.join(temp_dir, portfile))
         args.append('-o')
         args.append(os.path.join(temp_dir,outputfile))
         args = args + self.config.apply_config()
@@ -72,31 +75,25 @@ class FscanPlugin(BasePlugin):
         process = subprocess.run(args, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = process.stdout.decode('utf-8')
         error = process.stderr.decode('utf-8')
+        self.save_log(' '.join(args))
+        self.save_log(output)
+        self.save_log(error)
         try:
             with open(os.path.join(temp_dir,outputfile),'r',encoding='utf-8') as f:
                 result = f.read()
-            self.save_log(output)
-            self.save_log(error)
             parsed = self.parse(result)
             logger.debug(f"get result: {json.dumps(parsed)}")
-            for ip in parsed['ports'].keys():
-                for port in parsed['ports'][ip]:
-                    for target in target_list:
-                        if target.ip == ip:
-                            vul = parsed['vul'].get(f'{ip}:{port}')
-                            if vul == None:
-                                continue
-                            record = PocScanModel.generate(target, vul['title'], vul['vultype'], 'fscan', vul['title'], '', '')
-                            if parsed['info'].get(f'{ip}:{port}'):
-                                info = parsed['info'].get(f'{ip}:{port}')
-                                record = ServiceDetectModel.generate(record, "web", info)
-                            
-                            port_model.append(record)
-                            break
+            for target in target_list:
+                vul = parsed['vuls'].get(f'{target.ip}:{target.port}')
+                if vul == None:
+                    continue
+                record = PocScanModel.generate(target, vul['title'], vul['vultype'], 'fscan', vul['title'], '', '')
+                poc_model.append(record)
+
         except FileNotFoundError as e:
             pass
         shutil.rmtree(temp_dir)
-        return port_model
+        return poc_model
 
         
 
@@ -131,11 +128,12 @@ class FscanPlugin(BasePlugin):
         process = subprocess.run(args, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         output = process.stdout.decode('utf-8')
         error = process.stderr.decode('utf-8')
+        self.save_log(' '.join(args))
+        self.save_log(output)
+        self.save_log(error)
         try:
             with open(os.path.join(temp_dir,outputfile),'r',encoding='utf-8') as f:
                 result = f.read()
-            self.save_log(output)
-            self.save_log(error)
             parsed = self.parse(result)
             logger.debug(f"get result: {json.dumps(parsed)}")
             for ip in parsed['ports'].keys():
@@ -166,6 +164,9 @@ class FscanPlugin(BasePlugin):
                 parsed['ports'][i[0]] = []
             parsed['ports'][i[0]].append(i[1])
         
+        for ip in parsed['ports'].keys():
+            parsed['ports'][ip] = list(set(parsed['ports'][ip]))
+        
         infolist = re.findall(r'\[\*\] WebTitle:(https?://([^ :]*)(:\d+)?)\s+code:(\d+)\s+len:(\d+)\s+title:(.*)', result)
         for info in infolist:
             url, ip, port, status_code, content_length, title = info
@@ -181,7 +182,7 @@ class FscanPlugin(BasePlugin):
                 'content_length': content_length,
                 'title': title
             }
-        vullist = re.findall(r'\[\+\] ((([^:]*):(.*(:\d+)?))\s+([^ ]*)\s+([^\[ ]*))',result, re.MULTILINE)
+        vullist = re.findall(r'\[\+\] ((([^: \[\]]*):([^: \[\]]*(:\d+)?))\s+([^ ]*)\s+([^\[\] ]*))',result, re.MULTILINE)
         for vul in vullist:
             title, url, service, ipport, port, vultype, detail = vul
             if port == '':
@@ -190,6 +191,7 @@ class FscanPlugin(BasePlugin):
                 else:
                     port = '80'
                 ipport = f'{ipport}:{port}'
+            ipport = ipport.strip('/')
             parsed['vuls'][ipport] = {
                 'url': url,
                 'service': service,

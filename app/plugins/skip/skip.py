@@ -43,3 +43,7 @@ class SkipPlugin(BasePlugin):
         return []
     def final_step(self, target_list: List[BaseModel]) -> List[FinalStepModel]:
         return []
+
+    @staticmethod
+    def isinstall():
+        return True

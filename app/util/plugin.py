@@ -214,12 +214,13 @@ class BasePlugin:
 
             # load target
             # get model from stage function param
-            func = getattr(cls, stage, None)
+            func = getattr(BasePlugin, stage, None)
             if func == None:
                 raise NotImplementedError(f"{stage} has not been implemented")
-            func_annotations = getattr(BasePlugin, '__annotations__', None)
+            func_annotations = getattr(func, '__annotations__', None)
             if func_annotations == None:
                 raise Exception('what happend?')
+            print(func.__dict__)
             inputtype = func_annotations['target_list'].__args__[0]
 
             filter_instance = InputFilter(filter, inputtype,taskid)

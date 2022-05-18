@@ -246,8 +246,8 @@ class PocScanModel(PortDetectModel):
             self.updated = datetime.now()
         db_vuldata.insert_one(self.toDict())
 
-    def __init__(self, title, type, plugin, info, req, resp, *args, **kwargs) -> None:
-        for i in [title, type, plugin, info, req, resp]:
+    def __init__(self, title, vultype, plugin, info, req, resp, *args, **kwargs) -> None:
+        for i in [title, vultype, plugin, info, req, resp]:
             if type(i) != str:
                 raise TypeError()
         try:
@@ -256,7 +256,7 @@ class PocScanModel(PortDetectModel):
             if len(kwargs.keys()) > 0:
                 raise e
         self.title = title
-        self.type = type
+        self.type = vultype
         self.plugin = plugin
         self.info = info
         self.req = req
