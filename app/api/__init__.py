@@ -1,4 +1,5 @@
 from flask import Blueprint
+from api.config import query_config, save_config
 
 from api.service import query_service
 from .dashboard import dashboard
@@ -28,3 +29,7 @@ app_bp.add_url_rule('/<action>/task', None, task_action, methods=['POST'])
 # service
 
 app_bp.add_url_rule('/service', None, query_service, methods = ['POST'])
+
+# config
+app_bp.add_url_rule('/config', None, query_config, methods = ["POST"])
+app_bp.add_url_rule('/save/config', None, save_config, methods = ['POST'])

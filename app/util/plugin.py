@@ -139,7 +139,7 @@ class PluginConfig:
     def load_from_database(self, stage, taskid):
         # task config > global config > default config
 
-        global_config = db_config.find_one({'taskid': 'global','stage': 'global','plugin': self._slime_name})
+        global_config = db_config.find_one({'taskid': 'global','stage': stage,'plugin': self._slime_name})
         task_config = db_config.find_one({'taskid': taskid, 'stage': stage, 'plugin': self._slime_name})
 
         if global_config == None:
@@ -156,7 +156,7 @@ class PluginConfig:
         record = {'config': {}}
         if stage == 'global':
             record['taskid'] = 'global'
-            record['stage'] = 'global'
+            record['stage'] = stage
         else:
             record['taskid'] = taskid
             record['stage'] = stage
