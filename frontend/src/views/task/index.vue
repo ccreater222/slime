@@ -160,7 +160,7 @@ export default {
       size: 20,
       total: 0,
       tagstatus: {
-        'done': 'success',
+        'success': 'success',
         'failed': 'danger',
         'execute': 'primary',
         'wait': 'warning'

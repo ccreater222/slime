@@ -1,7 +1,14 @@
 <template>
   <el-form ref="form" :model="config" label-width="80px">
-    <el-form-item v-for="key in plugininfo.config" :key="key" :label="key">
-      <el-input v-model="config[key]" @input="inputHandler" />
+    <el-form-item v-for="key in plugininfo.config" :key="key">
+      <el-row>
+        <el-col :span="4">
+          <div style="text-overflow: ellipsis;" :content="key"> {{ key }} </div>
+        </el-col>
+        <el-col :span="20">
+          <el-input v-model="config[key]" @input="inputHandler" />
+        </el-col>
+      </el-row>
     </el-form-item>
   </el-form>
 </template>
@@ -15,15 +22,20 @@ export default {
     stagename: {
       type: String,
       required: true
+    },
+    config: {
+      type: Object,
+      default: () => {
+        return {}
+      }
     }
   },
   data() {
     var config = {}
     this.plugininfo.config.forEach(k => {
-      config[k] = ''
+      if (config[k] === undefined) { config[k] = '' }
     })
     return {
-      config
     }
   },
   methods: {

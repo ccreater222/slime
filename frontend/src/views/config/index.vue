@@ -12,7 +12,7 @@
               <template slot="title">
                 {{ plugin.name }}
               </template>
-              <plugin-config :plugininfo="plugin" :config="pluginsconfig[type][plugin.name]" :stagename="type" @datachanged="pluginConfigUpdate" />
+              <plugin-config :plugininfo="plugin" :config="getpluginconfig(type, plugin.name)" :stagename="type" @datachanged="pluginConfigUpdate" />
             </el-collapse-item>
           </template>
           <template v-else>
@@ -37,20 +37,23 @@ export default {
     PluginConfig
   },
   data() {
-    getconfig({ taskid: 'default' }).then(
+    getconfig({ taskid: 'global' }).then(
       data => {
         this.$data.pluginsconfig = data.data.plugins
         this.$data.globalconfig = data.data.global
       }
-    )
-    getplugins().then(data => {
-      this.$data.stage = data.data.stage
-      this.$data.stage['global']
-      this.$data.plugins = data.data.plugins
-      Object.keys(this.$data.stage).forEach(k => {
-        this.$data.selectedplugins[k] = []
+    ).then(() => {
+      getplugins().then(data => {
+        this.$data.stage = data.data.stage
+        this.$data.stage['global']
+        this.$data.plugins = data.data.plugins
+        Object.keys(this.$data.stage).forEach(k => {
+          this.$data.selectedplugins[k] = []
+          this.$data.plugins[k] = this.$data.plugins[k].filter((v) => { if (v['name'] === 'skip') return false; else return true })
+        })
       })
     })
+
     return {
       stage: {},
       plugins: {},
@@ -61,15 +64,27 @@ export default {
     }
   },
   methods: {
+    getpluginconfig(stage, plugin) {
+      if (stage === 'global') {
+        return {}
+      } else {
+        for (var item of this.pluginsconfig[stage]) {
+          if (item.name === plugin) {
+            return item.config
+          }
+        }
+      }
+      return {}
+    },
     pluginConfigUpdate(stagename, plugin, config) {
       this.pluginsconfig[stagename][plugin] = config
     },
     saveConfig(configtype) {
       let promise = null
       if (configtype === 'global') {
-        promise = saveconfig({ taskid: 'default', config: this.$data.globalconfig })
+        promise = saveconfig({ type: configtype, taskid: 'global', config: this.$data.globalconfig })
       } else {
-        promise = saveconfig({ taskid: 'default', config: this.$data.pluginsconfig[configtype] })
+        promise = saveconfig({ type: configtype, taskid: 'global', config: this.$data.pluginsconfig[configtype] })
       }
       promise.then(
         data => {
