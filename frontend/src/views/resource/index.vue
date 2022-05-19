@@ -181,7 +181,7 @@
                 <template slot="title">
                   <el-checkbox :false-label="JSON.stringify([false,plugin.name])" :true-label="JSON.stringify([true,plugin.name])" @change="selectplugin">{{ plugin.name }}</el-checkbox>
                 </template>
-                <plugin-config :plugininfo="plugin" :stagename="stagename" @datachanged="pluginConfigUpdate" />
+                <plugin-config :config="getpluginconfig(stagename, plugin.name)" :plugininfo="plugin" :stagename="stagename" @datachanged="pluginConfigUpdate" />
               </el-collapse-item>
             </el-collapse>
           </el-col>
@@ -213,6 +213,7 @@ import waves from '@/directive/waves/index.js'
 import AnalyzeTemplate from './components/AnalyzeTemplate.vue'
 import PluginConfig from './components/PluginConfig.vue'
 import EditableTag from '@/components/EditableTag.vue'
+import { getconfig } from '@/api/config'
 import { saveAs } from 'file-saver'
 const deepcopy = require('deepcopy')
 
@@ -238,13 +239,20 @@ export default {
         this.$data.total = data.total
       }
     )
-    getplugins().then(data => {
-      this.$data.stage = data.data.stage
-      this.$data.plugins = data.data.plugins
-      this.$data.stagelist = data.data.stagelist
-      Object.keys(this.$data.stage).forEach(k => {
-        this.$data.selectedplugins[k] = []
-        this.$data.pluginsconfig[k] = {}
+    getconfig({ taskid: 'global' }).then(
+      data => {
+        this.$data.pluginsconfig = data.data.plugins
+        this.$data.globalconfig = data.data.global
+      }
+    ).then(() => {
+      getplugins().then(data => {
+        this.$data.stage = data.data.stage
+        this.$data.plugins = data.data.plugins
+        this.$data.stagelist = data.data.stagelist
+        Object.keys(this.$data.stage).forEach(k => {
+          this.$data.selectedplugins[k] = []
+          if (this.$data.pluginsconfig[k] === undefined) { this.$data.pluginsconfig[k] = {} }
+        })
       })
     })
 
@@ -306,6 +314,18 @@ export default {
     }
   },
   methods: {
+    getpluginconfig(stage, plugin) {
+      if (stage === 'global') {
+        return {}
+      } else {
+        for (var item of this.pluginsconfig[stage]) {
+          if (item.name === plugin) {
+            return item.config
+          }
+        }
+      }
+      return {}
+    },
     updatetag: function(item, data) {
       this.$data.temp[item] = data
     },
