@@ -7,6 +7,7 @@ from .task import task_action, task_query,task_create
 from .vuldata import vuldata_query
 from .resource import delete_resource, query_resource, create_resource, update_resource, analyze_resource
 from .plugins import query_plugins
+from .schedule import *
 
 app_bp = Blueprint('app', __name__, url_prefix='/api')
 app_bp.add_url_rule('/dashboard',None, dashboard)
@@ -33,3 +34,8 @@ app_bp.add_url_rule('/service', None, query_service, methods = ['POST'])
 # config
 app_bp.add_url_rule('/config', None, query_config, methods = ["POST"])
 app_bp.add_url_rule('/save/config', None, save_config, methods = ['POST'])
+
+# schedule
+
+app_bp.add_url_rule('/schedule', None, query_schedule, methods=['POST'])
+app_bp.add_url_rule('/<action>/task', None, action_schedule, methods = ['POST'])
