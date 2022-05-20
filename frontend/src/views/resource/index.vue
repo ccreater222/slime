@@ -343,7 +343,7 @@ export default {
         selectall: this.$data.selectall,
         selected: this.$data.selected
       }
-      const stageorder = Object.keys(this.$data.stage)
+      const stageorder = this.stagelist
       let state = 0
       const targetstage = []
       for (var i = 0; i < stageorder.length; i++) {
