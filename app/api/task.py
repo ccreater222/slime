@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import math
 from util.plugin import PLUGIN_LIST
 from util.task import Task, Taskstatus

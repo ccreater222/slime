@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from plugins.fscan.config import FscanConfig
 from plugins.fscan.fscan import FscanPlugin
 from util.plugin import BasePlugin, PluginConfig, load_plugins,PLUGIN_LIST

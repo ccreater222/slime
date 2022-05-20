@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from util.vuldata import VulData
 import random
 from string import ascii_letters

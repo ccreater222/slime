@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 # 任务连续
 # 子任务管理
 
@@ -102,6 +104,7 @@ class Task:
             for plugin in value.keys():
                 config_clazz = PLUGIN_LIST[plugin]['config']['clazz']
                 instance = config_clazz()
+                instance.load_from_database(stagename, self.taskid)
                 for k, v in value[plugin].items():
                     setattr(instance, k, v)
                 instance.save_to_database(stagename, self.taskid)

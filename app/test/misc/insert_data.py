@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from util.stage_model import *
 import random
 cidr = ["100.100.1.", "39.108.164.", "8.8.8."]

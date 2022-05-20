@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import config.development as current_mode
 broker_url = current_mode.RABBIT_URL
 result_backend = current_mode.REDIS_URL
@@ -12,3 +14,6 @@ worker_prefetch_multiplier = 1
 task_queue_max_priority = 15
 broker_connection_timeout = 7200
 worker_hijack_root_logger = False
+
+broker_heartbeat = 0
+worker_cancel_long_running_tasks_on_connection_loss = False

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from util.plugin import PluginConfig
 
 class SkipConfig(PluginConfig):

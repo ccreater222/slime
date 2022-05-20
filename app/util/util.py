@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from inspect import getmembers,ismethod,isfunction
 
 from bson import ObjectId

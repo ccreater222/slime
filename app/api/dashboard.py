@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from util.client import *
 from datetime import datetime,timedelta
 

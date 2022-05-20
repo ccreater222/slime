@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from pymongo import MongoClient
 from config.config import MONGODB_URL
 from celery import Celery

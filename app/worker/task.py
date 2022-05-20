@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import traceback
 from celery.result import AsyncResult
 from util.client import celery_app

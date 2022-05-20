@@ -1,5 +1,8 @@
+# -*- coding: UTF-8 -*-
 
-PYTHON2 = ""
-PYTHON3 = "python"
+
+PYTHON2 = "python3"
+PYTHON3 = "python3"
 GIT = "git"
 PYTHON_PACKAGE_INDEX = "https://mirrors.aliyun.com/pypi/simple/"
+PROXY = "http://100.100.1.14:1080"

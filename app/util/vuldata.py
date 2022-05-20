@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from util.client import db_vuldata
 from datetime import datetime
 from util.stage_model import ServiceDetectModel

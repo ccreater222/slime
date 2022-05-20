@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import math
 from util.vuldata import VulData
 from util.response import SuccessResponse

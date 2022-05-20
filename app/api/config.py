@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from util.plugin import PLUGIN_LIST,STAGE_LIST,PluginConfig
 from util.response import SuccessResponse
 from flask import request

@@ -1,0 +1,38 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq
+    restart: always
+    # ports:
+    #   - 127.0.0.1:5672:5672
+  redis:
+    image: redis
+    restart: always
+    # ports:
+    #   - 127.0.0.1:6379:6379
+  mongodb:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: youwil1neverkn0w
+      MONGO_INITDB_DATABASE: slime
+    volumes:
+      - './docker/mongo/init.js:/docker-entrypoint-initdb.d/init.js:ro'
+    # ports:
+    #   - 127.0.0.1:27017:27017
+  web:
+    build: 
+      context: ./
+      dockerfile: ./docker/web/Dockerfile
+    restart: always
+    # volumes:
+    #   - ./app:/app
+    #   - ./frontend/dist:/var/www/html
+    ports:
+      - 8000:80
+  worker:
+    build: 
+      context: ./
+      dockerfile: ./docker/worker/Dockerfile
+    restart: always

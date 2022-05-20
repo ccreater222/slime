@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from util.plugin import PLUGIN_LIST,STAGE_LIST
 from util.response import SuccessResponse
 from util.util import get_all_keys

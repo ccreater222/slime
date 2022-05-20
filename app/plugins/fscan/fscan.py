@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 import json
 import shutil
 import re
@@ -10,6 +12,7 @@ from typing import List
 from util.stage_model import BaseModel, FingerprintDetectModel, IpInfoModel, PocScanModel, PortDetectModel, ServiceDetectModel, FinalStepModel
 import requests
 from util.logging import getlogger
+from config.plugin import PROXY
 
 logger = getlogger(__name__)
 class FscanPlugin(BasePlugin):
@@ -35,7 +38,7 @@ class FscanPlugin(BasePlugin):
             filename = 'fscan'
         if not os.path.exists(os.path.join(current_dir,'resource')):
             os.mkdir(os.path.join(current_dir,'resource'))
-        r = requests.get(download_url)
+        r = requests.get(download_url, proxies={"http": PROXY, "https": PROXY})
         with open(os.path.join(current_dir,'resource',filename),'wb') as f:
             f.write(r.content)
     
@@ -72,12 +75,10 @@ class FscanPlugin(BasePlugin):
         args.append(os.path.join(temp_dir,outputfile))
         args = args + self.config.apply_config()
         logger.debug(f"fscan command line: {' '.join(args)}")
-        process = subprocess.run(args, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        process = subprocess.run(args, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
         output = process.stdout.decode('utf-8')
-        error = process.stderr.decode('utf-8')
         self.save_log(' '.join(args))
         self.save_log(output)
-        self.save_log(error)
         try:
             with open(os.path.join(temp_dir,outputfile),'r',encoding='utf-8') as f:
                 result = f.read()

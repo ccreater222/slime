@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from util.plugin import InputFilter
 from util.stage_model import BaseModel, FinalStepModel, FingerprintDetectModel, IpInfoModel, ServiceDetectModel, get_all_stage_model_keys
 from util.response import SuccessResponse
