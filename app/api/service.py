@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 from flask import request
 from util.plugin import InputFilter
 from util.stage_model import BaseModel, ServiceDetectModel

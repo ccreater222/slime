@@ -13,6 +13,7 @@ from util.stage_model import BaseModel, FingerprintDetectModel, IpInfoModel, Poc
 import requests
 from util.logging import getlogger
 from config.plugin import PROXY
+import netaddr
 
 logger = getlogger(__name__)
 class FscanPlugin(BasePlugin):
@@ -137,17 +138,32 @@ class FscanPlugin(BasePlugin):
                 result = f.read()
             parsed = self.parse(result)
             logger.debug(f"get result: {json.dumps(parsed)}")
-            for ip in parsed['ports'].keys():
-                for port in parsed['ports'][ip]:
-                    for target in target_list:
-                        if target.ip == ip:
+            for target in target_list:
+                ip = target.ip
+                if "/" in ip:
+                    try:
+                        cidr = netaddr.IPNetwork(ip)
+                    except:
+                        cidr = []
+                    ips = list(cidr)
+                    for item in ips:
+                        ports = parsed.get("ports", {}).get(str(item), [])
+                        for port in ports:
                             record = PortDetectModel.generate(target, int(port))
+                            record.ip = str(item)
+                            ip = str(item)
                             if parsed['info'].get(f'{ip}:{port}'):
                                 info = parsed['info'].get(f'{ip}:{port}')
                                 record = ServiceDetectModel.generate(record, "web", info)
-                            
                             port_model.append(record)
-                            break
+                else:
+                    ports = parsed.get("ports", {}).get(ip, [])
+                    for port in ports:
+                        record = PortDetectModel.generate(target, int(port))
+                        if parsed['info'].get(f'{ip}:{port}'):
+                            info = parsed['info'].get(f'{ip}:{port}')
+                            record = ServiceDetectModel.generate(record, "web", info)
+                        port_model.append(record)
         except FileNotFoundError as e:
             pass
         shutil.rmtree(temp_dir)

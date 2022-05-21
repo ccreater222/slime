@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 import os
 from importlib import import_module
 from typing import  List
@@ -81,15 +82,23 @@ class InputFilter:
                 objid_arrays.append(hex_objid(val))
             condition['_id'] = {"$in": objid_arrays}
         result = {}
+        keys = self._model.get_need_attr()
+        for k in keys:
+            item = condition.get(k, {})
+            if type(item) != dict:
+                item = {"$eq": item}
+            item["$exists"] = True
+            condition[k] = item
         if self._taskid == '' or self._taskid == None:
             result = condition
         else:
             columns = {}
-            keys = self._model.get_need_attr()
+            
             for k in keys:
                 columns[k] = {'$exists': True}
             columns['taskid'] = self._taskid
             result = {'$or': [condition, columns]}
+        logger.debug(result)
         return result
 
 
@@ -103,6 +112,7 @@ class InputFilter:
             try:
                 result.append(self._model(**i))
             except Exception as e:
+                logger.debug(e)
                 pass
         return result
     def filter_by_page(self) -> list:
@@ -198,6 +208,7 @@ class BasePlugin:
     # taskid: 用于选择上个阶段新发现的资产 ,根据时间来过滤后来添加的数据
     # TODO : 
     def save_log(self, log: str) -> None:
+        logger.debug(log)
         db_task.update_one({"taskid": self.taskid}, {"$push": {f"log.{self.stage}.{self._slime_name}": log}})
 
     @classmethod

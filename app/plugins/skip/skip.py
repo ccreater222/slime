@@ -10,7 +10,9 @@ class SkipPlugin(BasePlugin):
     def info_collect(self, target_list: List[InfoCollectModel]) -> List[InfoCollectModel]:
         result = []
         for item in target_list:
-            data = db_resource.find_one(item.toDict())
+            condition = item.toDict()
+            condition['name'] = {"$exists": True}
+            data = db_resource.find_one(condition)
             if data != None:
                 continue
             result.append(InfoCollectModel.generate(item, ""))
@@ -18,7 +20,9 @@ class SkipPlugin(BasePlugin):
     def topdomain_collect(self, target_list: List[InfoCollectModel]) -> List[TopdomainCollectModel]:
         result = []
         for item in target_list:
-            data = db_resource.find_one(item.toDict())
+            condition = item.toDict()
+            condition["topdomain"] = {"$exists": True}
+            data = db_resource.find_one(condition)
             if data != None:
                 continue
             result.append(TopdomainCollectModel.generate(item, ""))
@@ -26,12 +30,20 @@ class SkipPlugin(BasePlugin):
     def subdomain_collect(self, target_list: List[TopdomainCollectModel]) -> List[SubdomainCollectModel]:
         result = []
         for item in target_list:
+            condition = item.toDict()
+            condition["subdomain"] = {"$exists": True}
+            data = db_resource.find_one(condition)
+            if data != None:
+                continue
             result.append(SubdomainCollectModel.generate(item, ""))
         return result
     def ip_info(self, target_list: List[SubdomainCollectModel]) -> List[IpInfoModel]:
         result = []
         for item in target_list:
-            data = db_resource.find_one(item.toDict())
+            condition = item.toDict()
+            condition["ip"] = {"$exists": True}
+            condition["iscdn"] = {"$exists": True}
+            data = db_resource.find_one(condition)
             if data != None:
                 continue
             result.append(IpInfoModel.generate(item, False, ""))
@@ -39,7 +51,9 @@ class SkipPlugin(BasePlugin):
     def port_detect(self, target_list: List[IpInfoModel]) -> List[PortDetectModel]:
         result = []
         for item in target_list:
-            data = db_resource.find_one(item.toDict())
+            condition = item.toDict()
+            condition["port"] = {"$exists": True}
+            data = db_resource.find_one(condition)
             if data != None:
                 continue
             result.append(PortDetectModel.generate(item, 0))
@@ -47,7 +61,9 @@ class SkipPlugin(BasePlugin):
     def service_detect(self, target_list: List[PortDetectModel]) -> List[ServiceDetectModel]:
         result = []
         for item in target_list:
-            data = db_resource.find_one(item.toDict())
+            condition = item.toDict()
+            condition["service"] = {"$exists": True}
+            data = db_resource.find_one(condition)
             if data != None:
                 continue
             result.append(ServiceDetectModel.generate(item, "", {}))
@@ -55,7 +71,9 @@ class SkipPlugin(BasePlugin):
     def fingerprint_detect(self, target_list: List[ServiceDetectModel]) -> List[FingerprintDetectModel]:
         result = []
         for item in target_list:
-            data = db_resource.find_one(item.toDict())
+            condition = item.toDict()
+            condition["finger"] = {"$exists": True}
+            data = db_resource.find_one(condition)
             if data != None:
                 continue
             result.append(FingerprintDetectModel.generate(item, []))
