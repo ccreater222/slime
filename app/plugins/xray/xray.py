@@ -32,8 +32,12 @@ class XrayPlugin(BasePlugin):
         p = subprocess.run(args, cwd=basedir, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
         output = p.stdout.decode("utf-8")
         self.save_log(output)
-        with open(os.path.join(tmpdir, "result.json"), "r") as f:
-            data = f.read()
+        try:
+            with open(os.path.join(tmpdir, "result.json"), "r") as f:
+                data = f.read()
+        except Exception:
+            shutil.rmtree(tmpdir)
+            return
         data = json.loads(data)
         result = []
         for item in data:
@@ -63,8 +67,12 @@ class XrayPlugin(BasePlugin):
         p = subprocess.run(args, cwd=basedir, stdout = subprocess.PIPE, stderr = subprocess.STDOUT)
         output = p.stdout.decode("utf-8")
         self.save_log(output)
-        with open(os.path.join(tmpdir, "result.json"), "r") as f:
-            data = f.read()
+        try:
+            with open(os.path.join(tmpdir, "result.json"), "r") as f:
+                data = f.read()
+        except Exception:
+            shutil.rmtree(tmpdir)
+            return
         data = json.loads(data)
         result = []
         for item in data:
@@ -95,6 +103,7 @@ class XrayPlugin(BasePlugin):
         r = requests.get(download_url, proxies={"http": PROXY, "https": PROXY})
         with open(os.path.join(current_dir,'resource',filename),'wb') as f:
             f.write(r.content)
+
         with zipfile.ZipFile(os.path.join(current_dir,'resource',filename), 'r') as zip_ref:
             zip_ref.extractall(os.path.join(current_dir,'resource'))
         os.remove(os.path.join(current_dir,'resource',filename))

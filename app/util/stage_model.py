@@ -240,7 +240,7 @@ class ServiceDetectModel(PortDetectModel):
         
         scheme = ""
         try:
-            r = requests.get(f"https://{self.ip}:{self.port}", verify=False)
+            r = requests.get(f"https://{self.ip}:{self.port}", verify=False, timeout = 3)
             scheme = "https"
         except requests.exceptions.SSLError:
             # not ssl
@@ -254,7 +254,7 @@ class ServiceDetectModel(PortDetectModel):
             pass
         if scheme == "":
             try:
-                r = requests.get(f"http://{self.ip}:{self.port}")
+                r = requests.get(f"http://{self.ip}:{self.port}", timeout = 3)
                 scheme = "http"
             except requests.exceptions.ConnectionError:
                 pass
