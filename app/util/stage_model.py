@@ -1,13 +1,19 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 
 
 # 每个阶段输入至少要有上个阶段的model属性的字段
 # 每个阶段输出至少要有这个阶段的model属性的字段
 from datetime import datetime
 from bson import ObjectId
+import requests
 from util.util import dotset, get_all_keys
 from util.client import db_resource,db_vuldata
 from dateutil import parser as dateparser
+from urllib3.exceptions import InsecureRequestWarning
+
+# Suppress only the single warning from urllib3 needed.
+requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 class BaseModel:
     _id: ObjectId
@@ -110,6 +116,8 @@ class BaseModel:
         model_keys = model.get_all_keys()
         instance = cls(*args, **kwargs)
         for key in model_keys:
+            if getattr(instance, key, None) != None:
+                continue
             setattr(instance, key, getattr(model, key))
         return instance
     
@@ -219,6 +227,49 @@ class ServiceDetectModel(PortDetectModel):
                 raise e
         self.service = service
         self.info = info
+    def geturl(self):
+        if self.info.get("isweb", "").lower() == "false":
+            return f"{self.ip}:{self.port}"
+
+        url = self.info.get("url", "")
+        if url != "":
+            return url
+        
+        if "https" in self.service:
+            return f"https://{self.ip}:{self.port}"
+        
+        scheme = ""
+        try:
+            r = requests.get(f"https://{self.ip}:{self.port}", verify=False)
+            scheme = "https"
+        except requests.exceptions.SSLError:
+            # not ssl
+            pass
+        except requests.exceptions.ConnectionError:
+            # is ssl but not https
+            self.info["isweb"] = "false"
+            self.save()
+            return f"{self.ip}:{self.port}"
+        except:
+            pass
+        if scheme == "":
+            try:
+                r = requests.get(f"http://{self.ip}:{self.port}")
+                scheme = "http"
+            except requests.exceptions.ConnectionError:
+                pass
+        
+        if scheme == "":
+            self.info["isweb"] = "false"
+            self.save()
+            return f"{self.ip}:{self.port}"
+        else:
+            self.info["isweb"] = "true"
+            self.info["url"] = f"{scheme}://{self.ip}:{self.port}"
+            self.save()
+            return self.info["url"]
+        
+        
 
 class FingerprintDetectModel(ServiceDetectModel):
     finger: list
@@ -231,7 +282,7 @@ class FingerprintDetectModel(ServiceDetectModel):
             if len(kwargs.keys()) > 0:
                 raise e
         self.finger = finger
-class PocScanModel(PortDetectModel):
+class PocScanModel(ServiceDetectModel):
     title: str
     type: str
     plugin: str

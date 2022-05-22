@@ -43,7 +43,7 @@ class FscanPlugin(BasePlugin):
         with open(os.path.join(current_dir,'resource',filename),'wb') as f:
             f.write(r.content)
     
-    def poc_scan(self, target_list: List[FingerprintDetectModel]) -> List[PocScanModel]:
+    def poc_scan(self, target_list: List[ServiceDetectModel]) -> List[PocScanModel]:
         poc_model = []
         temp_dir = os.path.join(os.path.dirname(__file__),'resource','tmp',self.taskid)
         if not os.path.exists(temp_dir):

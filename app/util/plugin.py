@@ -39,7 +39,7 @@ class InputFilter:
 
         if self._filter.get('columns',[]) != []:
             for k in self._model.get_need_attr():
-                if k in ['updated', 'created']:
+                if k in ['updated', 'created', "info", "finger"]:
                     continue
                 if k not in self._filter.get('columns',[]):
                     raise TypeError(f'{self._model.__name__} need {",".join(self._model.get_need_attr())} but only {k} is not given')
@@ -247,7 +247,6 @@ class BasePlugin:
             instance.save_log(traceback.format_exc())
             raise e
 
-
     @staticmethod
     def getmodel(stage):
         stage = stage.replace('_', '')
@@ -284,7 +283,7 @@ class BasePlugin:
     def fingerprint_detect(self,target_list: List[ServiceDetectModel])->List[FingerprintDetectModel]:
         raise NotImplementedError()
     
-    def poc_scan(self,target_list: List[PortDetectModel])->List[PocScanModel]:
+    def poc_scan(self,target_list: List[ServiceDetectModel])->List[PocScanModel]:
         raise NotImplementedError()
     
     def final_step(self,target_list: List[BaseModel])->List[FinalStepModel]:

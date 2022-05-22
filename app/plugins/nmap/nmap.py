@@ -116,7 +116,7 @@ class NmapPlugin(BasePlugin):
 
         return result
 
-    def poc_scan(self, target_list: List[FingerprintDetectModel]) -> List[PocScanModel]:
+    def poc_scan(self, target_list: List[ServiceDetectModel]) -> List[PocScanModel]:
         return []
 
     @staticmethod

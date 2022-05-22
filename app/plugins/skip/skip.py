@@ -78,7 +78,7 @@ class SkipPlugin(BasePlugin):
                 continue
             result.append(FingerprintDetectModel.generate(item, []))
         return result
-    def poc_scan(self, target_list: List[FingerprintDetectModel]) -> List[PocScanModel]:
+    def poc_scan(self, target_list: List[ServiceDetectModel]) -> List[PocScanModel]:
         return []
     def final_step(self, target_list: List[BaseModel]) -> List[FinalStepModel]:
         return []
