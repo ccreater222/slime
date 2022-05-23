@@ -9,7 +9,7 @@ RUN ./venv/bin/python app.py install
 RUN apt-get install -y --force-yes nginx
 COPY ./docker/web/start.sh /start.sh
 COPY ./docker/web/nginx.conf /etc/nginx/sites-available/default 
-COPY ./docker/web/htpasswd /etc/apache2/.htpasswd
+COPY ./docker/web/htpasswd /etc/apache2/htpasswd
 COPY ./frontend/dist /var/www/html
 
 CMD [ "/bin/bash", "/start.sh" ]
