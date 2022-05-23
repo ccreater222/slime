@@ -66,8 +66,13 @@ class OneForAllPlugin(BasePlugin):
     @staticmethod
     def isinstall():
         basedir = os.path.join(os.path.dirname(__file__), "resource")
+        if not os.path.exists(basedir):
+            os.makedirs(basedir)
         install_python3()
-        p = subprocess.run(["./venv/bin/python", "oneforall.py", "-h"], stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL, cwd=basedir)
+        try:
+            p = subprocess.run(["./venv/bin/python", "oneforall.py", "-h"], stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL, cwd=basedir)
+        except :
+            return False
         return p.returncode == 0
 
     @staticmethod

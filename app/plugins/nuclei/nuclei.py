@@ -141,5 +141,6 @@ class NucleiPlugin(BasePlugin):
             zip_ref.extractall(os.path.join(current_dir,'resource'))
         os.rename(os.path.join(current_dir,'resource',f"nuclei-templates-{version}"), os.path.join(current_dir,'resource',f"nuclei-templates"))
         os.remove(os.path.join(current_dir,'resource',"template.zip"))
+        p = subprocess.run(["./nuclei", ""] ,cwd = os.path.join(current_dir, "resource"))
         p = subprocess.run(["./nuclei", "-ud", os.path.join(current_dir,'resource',f"nuclei-templates"), "-duc"] ,cwd = os.path.join(current_dir, "resource"))
         p.check_returncode()

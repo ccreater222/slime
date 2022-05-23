@@ -1,0 +1,31 @@
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: slime-worker
+    labels:
+      app: slime-worker
+  spec:
+    replicas: 3
+    selector:
+      matchLabels:
+        app: slime-worker
+    template:
+      metadata:
+        labels:
+          app: slime-worker
+      spec:
+        containers:
+        - name: slime-worker
+          resources:
+            limits:
+              cpu: "500m"
+              memory: 512Mi
+            requests:
+              cpu: "500m"
+              memory: 512Mi
+          image: ccreater/slime-worker:latest
+
+kind: List
+metadata: {}

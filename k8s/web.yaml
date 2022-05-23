@@ -1,0 +1,68 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: null
+    name: nginx-conf
+  data:  
+    htpasswd: |
+                slime:$apr1$L.OKIyu5$zTQN2iFtplDn.p6FMK16J0
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: slime-web
+    labels:
+      app: slime-web
+  spec:
+    selector:
+      matchLabels:
+        app: slime-web
+    template:
+      metadata:
+        labels:
+          app: slime-web
+      spec:
+        containers:
+        - name: slime-web
+          resources:
+            limits:
+              cpu: "500m"
+              memory: 512Mi
+            requests:
+              cpu: "500m"
+              memory: 512Mi
+          image: ccreater/slime-server:latest
+          ports:
+          - containerPort: 80
+          volumeMounts:
+          - mountPath: /etc/apache2
+            name: nginx-conf
+        volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+            - key: htpasswd
+              path: htpasswd
+            name: nginx-conf
+          name: nginx-conf
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: slime-web
+  spec:
+    externalTrafficPolicy: Cluster
+    ports:
+    - name: slime-web
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    selector:
+      app: slime-web
+    type: LoadBalancer
+  status:
+    loadBalancer: {}
+kind: List
+metadata: {}

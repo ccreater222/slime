@@ -121,7 +121,10 @@ class NmapPlugin(BasePlugin):
 
     @staticmethod
     def isinstall():
-        p = subprocess.run(["nmap", "-h"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            p = subprocess.run(["nmap", "-h"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except:
+            return False
         return p.returncode == 0
     @staticmethod
     def install():

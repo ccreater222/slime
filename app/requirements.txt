@@ -1,5 +1,6 @@
 amqp==5.1.1
 async-timeout==4.0.2
+attrs==21.4.0
 billiard==3.6.4.0
 celery==5.2.6
 certifi==2022.5.18.1
@@ -14,6 +15,7 @@ Flask==2.1.2
 Flask-Cors==3.0.10
 idna==3.3
 importlib-metadata==4.11.3
+iniconfig==1.1.1
 itsdangerous==2.1.2
 Jinja2==3.1.2
 kombu==5.2.4
@@ -21,17 +23,22 @@ MarkupSafe==2.1.1
 msgpack==1.0.3
 netaddr==0.8.0
 packaging==21.3
+pluggy==1.0.0
 prompt-toolkit==3.0.29
+py==1.11.0
 pymongo==4.1.1
 pyparsing==3.0.9
+pytest==7.1.2
 python-dateutil==2.8.2
 python-dotenv==0.20.0
 python-masscan==0.1.6
 python-nmap==0.7.1
 pytz==2022.1
+PyYAML==6.0
 redis==4.3.1
 requests==2.27.1
 six==1.16.0
+tomli==2.0.1
 urllib3==1.26.9
 vine==5.0.0
 wcwidth==0.2.5

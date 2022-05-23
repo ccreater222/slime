@@ -1,0 +1,75 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: null
+    name: script
+  data:  
+    initjs: |
+              db.resource.createIndex({name:1,topdomain: 1,subdomain: 1,ip: 1,port: 1}, { unique: true })
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: mongodb
+    labels:
+      app: mongodb
+  spec:
+    selector:
+      matchLabels:
+        app: mongodb
+    template:
+      metadata:
+        labels:
+          app: mongodb
+      spec:
+        containers:
+        - name: mongodb
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+            requests:
+              cpu: "500m"
+              memory: 512Mi
+          image: mongo:latest
+          ports:
+          - containerPort: 27017
+            name: client
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /docker-entrypoint-initdb.d/
+            name: script
+          env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: root
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: youwil1neverkn0w
+          - name: MONGO_INITDB_DATABASE
+            value: slime
+        volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+            - key: initjs
+              path: init.js
+            name: script
+          name: script
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: mongodb
+  spec:
+    ports:
+    - name: mongodb
+      port: 27017
+      protocol: TCP
+      targetPort: 27017
+    selector:
+      app: mongodb
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: List
+metadata: {}

@@ -66,7 +66,10 @@ class MasscanPlugin(BasePlugin):
 
     @staticmethod
     def isinstall():
-        p = subprocess.run(["masscan", "--echo"], stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        try:
+            p = subprocess.run(["masscan", "--echo"], stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        except:
+            return False
         return p.returncode == 0
     @staticmethod
     def install():

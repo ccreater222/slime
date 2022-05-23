@@ -1,0 +1,123 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  data:
+    enabled_plugins: |
+            [rabbitmq_management,rabbitmq_peer_discovery_k8s].
+    rabbitmq.conf: |
+      queue_master_locator=min-masters
+      loopback_users.guest = false
+      vm_memory_high_watermark.absolute = 3GB
+      disk_free_limit.absolute = 4GB
+      consumer_timeout = 36000000      
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: null
+    name: rabbitmq-config
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    creationTimestamp: null
+    name: rabbitmq
+  spec:
+    podManagementPolicy: OrderedReady
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: rabbitmq
+    serviceName: rabbitmq
+    template:
+      metadata:
+        # annotations:
+        #   eks.tke.cloud.tencent.com/cpu: "2"
+        #   eks.tke.cloud.tencent.com/mem: 4Gi
+        creationTimestamp: null
+        labels:
+          app: rabbitmq
+      spec:
+        containers:
+        - name: rabbitmq
+          resources:
+            limits:
+              cpu: "2"
+              memory: 4Gi
+            requests:
+              cpu: "1"
+              memory: 2Gi 
+          env:
+          - name: HOSTNAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.name
+          - name: RABBITMQ_USE_LONGNAME
+            value: "true"
+          image: rabbitmq:latest
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 5672
+            name: amqp
+            protocol: TCP
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /etc/rabbitmq
+            name: config-volume
+          # - mountPath: /var/lib/rabbitmq/mnesia
+          #   name: rabbitmq-data-pvc
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 10
+        volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+            - key: rabbitmq.conf
+              path: rabbitmq.conf
+            - key: enabled_plugins
+              path: enabled_plugins
+            name: rabbitmq-config
+          name: config-volume
+        # - name: rabbitmq-data-pvc
+        #   persistentVolumeClaim:
+        #     claimName: rabbitmq-data-pvc
+    updateStrategy:
+      type: OnDelete
+    # rabbitm的pvc放在sts里
+    # volumeClaimTemplates:
+    # - metadata:
+    #     creationTimestamp: null
+    #     name: rabbitmq-data-pvc
+    #   spec:
+    #     accessModes:
+    #     - ReadWriteMany
+    #     resources:
+    #       requests:
+    #         storage: 20Gi
+    #     storageClassName: cbs-ssd
+    #   status:
+    #     phase: Pending
+
+  status:
+    replicas: 0
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: rabbitmq
+  spec:
+    clusterIP: None
+    ports:
+    - name: rabbitmq
+      port: 5672
+      protocol: TCP
+      targetPort: 5672
+    selector:
+      app: rabbitmq
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+kind: List
+metadata: {}
