@@ -42,6 +42,7 @@ class FscanPlugin(BasePlugin):
         r = requests.get(download_url, proxies={"http": PROXY, "https": PROXY})
         with open(os.path.join(current_dir,'resource',filename),'wb') as f:
             f.write(r.content)
+        os.system(f"chmod +x {os.path.join(current_dir,'resource',filename)}")
     
     def poc_scan(self, target_list: List[ServiceDetectModel]) -> List[PocScanModel]:
         poc_model = []

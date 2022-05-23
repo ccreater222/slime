@@ -29,6 +29,8 @@ class NucleiPlugin(BasePlugin):
         for item in data:
             if result.get(item["host"], []) == []:
                 result[item["host"]] = []
+            if item["host"] == "":
+                continue
             result[item["host"]].append(item)
         return result
 
@@ -44,7 +46,11 @@ class NucleiPlugin(BasePlugin):
         args.append("technologies")
         url_list = []
         for item in target_list:
-            url_list.append(item.geturl())
+            url = item.geturl()
+            if url == "":
+                continue
+            url_list.append(url)
+        url_list = list(set(url_list))
         with open(os.path.join(basedir, "url.txt"), "w") as f:
             f.write("\n".join(url_list))
         args += ["-o", os.path.join(basedir, "result.json"), "-json", "-l", os.path.join(basedir, "url.txt")]
@@ -82,7 +88,11 @@ class NucleiPlugin(BasePlugin):
         args = self.config.apply_config()
         url_list = []
         for item in target_list:
-            url_list.append(item.geturl())
+            url = item.geturl()
+            if url == "":
+                continue
+            url_list.append(url)
+        url_list = list(set(url_list))
         with open(os.path.join(basedir, "url.txt"), "w") as f:
             f.write("\n".join(url_list))
         args += ["-o", os.path.join(basedir, "result.json"), "-json", "-l", os.path.join(basedir, "url.txt")]
