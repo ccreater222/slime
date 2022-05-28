@@ -15,6 +15,8 @@ Slime将漏扫分为以下阶段：主体信息收集、主域名收集、子域
 
 ## Deployment
 
+分别可以使用docker-compose或者k8s进行环境的一键搭建。
+
 ### docker-compose
 
 ```bash
