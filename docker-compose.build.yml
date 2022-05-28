@@ -22,7 +22,9 @@ services:
     # ports:
     #   - 127.0.0.1:27017:27017
   web:
-    image: ccreater/slime-server
+    build: 
+      context: ./
+      dockerfile: ./docker/web/Dockerfile
     restart: always
     # volumes:
     #   - ./app:/app
@@ -30,5 +32,7 @@ services:
     ports:
       - 8000:80
   worker:
-    image: ccreater/slime-worker
+    build: 
+      context: ./
+      dockerfile: ./docker/worker/Dockerfile
     restart: always
