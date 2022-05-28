@@ -14,6 +14,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 14
+    - name: build frontend
+      run: cd ./frontend && npm install && npm run build:prod && cd ..
     - name: Build the Docker image
       run: docker-compose -f ./docker-compose.build.yml build
     - name: Tag the Docker image
