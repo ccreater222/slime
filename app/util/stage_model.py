@@ -258,6 +258,8 @@ class ServiceDetectModel(PortDetectModel):
                 scheme = "http"
             except requests.exceptions.ConnectionError:
                 pass
+            except:
+                pass
         
         if scheme == "":
             self.info["isweb"] = "false"
