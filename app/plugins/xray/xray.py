@@ -57,6 +57,8 @@ class XrayPlugin(BasePlugin):
             os.makedirs(tmpdir)
         url_list = []
         for item in target_list:
+            if getattr(item, "ip", "") == "" or getattr(item, "port", "") == "":
+                continue
             url_list.append(f"{item.ip}:{item.port}")
         with open(os.path.join(tmpdir, "url.txt"), "w") as f:
             f.write("\n".join(url_list))
@@ -77,6 +79,8 @@ class XrayPlugin(BasePlugin):
         result = []
         for item in data:
             for target in target_list:
+                if getattr(target, "ip", "") == "" or getattr(target, "port", "") == "":
+                    continue
                 if f"{target.ip}:{target.port}" in item.get("target", {}).get("url", ""):
                     detail = item.get("detail", {})
                     title = item.get("plugin", "")

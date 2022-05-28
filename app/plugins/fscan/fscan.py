@@ -101,6 +101,8 @@ class FscanPlugin(BasePlugin):
         
 
     def final_step(self, target_list: List[PocScanModel]) -> List[FinalStepModel]:
+        self.save_log("使用pocscan的fscan来代替")
+        return []
         return self.poc_scan(target_list)
     def port_detect(self, target_list: List[IpInfoModel]) -> List[PortDetectModel]:
         port_model = []
