@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 import dotenv
 import os
 import logging
@@ -7,6 +8,10 @@ loglevel = os.getenv("LOGLEVEL")
 if loglevel == None:
     loglevel = "INFO"
 level = getattr(logging, loglevel.upper(), logging.INFO)
+try:
+    os.makedirs(os.path.join(os.path.dirname(__file__), "..", "log"))
+except:
+    pass
 logging_config = {
     'version' : 1,
     'formatters' : {
