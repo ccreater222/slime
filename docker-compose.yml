@@ -24,8 +24,8 @@ services:
   web:
     image: ccreater/slime-server
     restart: always
-    # volumes:
-    #   - ./app:/app
+    volumes:
+      - ./docker/web/htpasswd:/etc/apache2/htpasswd
     #   - ./frontend/dist:/var/www/html
     ports:
       - 8000:80
