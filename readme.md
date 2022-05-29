@@ -41,7 +41,9 @@ kubectl apply -f k8s/
 
 由于许多安全工具是通过命令行调用，Slime使用了大量的命令拼接，只要能过了basic auth，那等于RCE，所以一定要改默认的Basic Auth，以及套上HTTPS
 
+## Usage
 
+[使用说明](./usage.md)
 
 ## Tool Sets
 

@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 import math
 from util.plugin import PLUGIN_LIST
 from util.task import Task, Taskstatus
@@ -25,6 +26,8 @@ def task_action(action):
         
     elif action == "stop":
         tasks = Task.load_all(form)
+        for task in tasks:
+            task.stop()
         taskids = map(lambda x: x.taskid, tasks)
         db_task.delete_many({"taskid": {"$in": list(taskids)}})
         return SuccessResponse({}, 0,0,0,0).toDict()
