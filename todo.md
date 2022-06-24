@@ -12,6 +12,11 @@
 ## 工具
 
 - [ ] Hackone
+- [ ] subfinder
+- [ ] fofa
+- [ ] shodan
+- [ ] hunter
+- [ ] quanke
 
 ## 重构
 
