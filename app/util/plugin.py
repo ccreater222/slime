@@ -223,6 +223,7 @@ class BasePlugin:
             config.apply_config()
             instance.config = config
             instance.stage = stage
+            instance.taskid = taskid
 
             # load target
             # get model from stage function param
@@ -259,7 +260,7 @@ class BasePlugin:
         raise NotImplementedError()
     
     @staticmethod
-    def isintstall():
+    def isinstall():
         raise NotImplementedError()
 
     def info_collect(self, target_list: List[BaseModel])->List[InfoCollectModel]:
