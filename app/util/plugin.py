@@ -18,10 +18,12 @@ from util.logging import getlogger
 from .stage_model import *
 from util.util import get_all_keys, hex_objid
 from util.client import db_config, db_task
+from worker.task import pluginrunner
 
 STAGE_LIST = ["info_collect","topdomain_collect","subdomain_collect","ip_info","port_detect","service_detect","fingerprint_detect","poc_scan","final_step"]
 PLUGIN_LIST = {}
 logger = getlogger(__name__)
+MAX_LOGLENGTH = 65535
 class InputFilter:
     
     def __init__(self, filter, model, taskid):
@@ -208,15 +210,13 @@ class BasePlugin:
     # taskid: 用于选择上个阶段新发现的资产 ,根据时间来过滤后来添加的数据
     # TODO : 
     def save_log(self, log: str) -> None:
-        logger.debug(log)
-        db_task.update_one({"taskid": self.taskid}, {"$push": {f"log.{self.stage}.{self._slime_name}": log}})
-
+        db_task.update_one({"taskid": self.taskid}, {"$push": {f"log.{self.stage}.{self._slime_name}": log[-MAX_LOGLENGTH:]}})
     @classmethod
     def dispatch(cls, stage, filter, taskid):
         instance = cls()
         try:
             # init instance
-            cls.taskid = taskid
+            instance.taskid = taskid
             # load config
             config = cls._slime_config()
             config.load_from_database(stage, taskid)
@@ -237,6 +237,8 @@ class BasePlugin:
             inputtype = func_annotations['target_list'].__args__[0]
 
             filter_instance = InputFilter(filter, inputtype,taskid)
+            for model in filter_instance.filter():
+                pluginrunner.delay(stage, instance._slime_name, model, taskid)
             # run
             result = getattr(instance,stage)(filter_instance.filter())
             

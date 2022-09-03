@@ -1,8 +1,9 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 import traceback
 from celery.result import AsyncResult
 from util.client import celery_app
-from util.plugin import PLUGIN_LIST
+from util.plugin import PLUGIN_LIST, BaseModel, BasePlugin
 from util.client import db_taskstruct, db_task
 import util.logging as logging
 import time
@@ -39,5 +40,27 @@ def workflow(taskid: str,stageinfo: dict, filter: dict) -> AsyncResult:
     db_taskstruct.delete_one({"taskid": taskid})
     db_task.update_one({"taskid": taskid}, {"$set": {"status": "success"}})
 
+@celery_app.task
+def pluginrunner(stage:str, plugin:str, data: BaseModel, taskid: str):
+    cls = PLUGIN_LIST[plugin]['plugin']
+    instance = cls()
+    try:
+        # init instance
+        instance.taskid = taskid
+        # load config
+        config = cls._slime_config()
+        config.load_from_database(stage, taskid)
+        instance.config = config
+        instance.stage = stage
 
+        # run
+        result = getattr(instance,stage)([data])
+
+        # save result
+        for item in result:
+            item.taskid = taskid
+            item.save()
+    except Exception as e:
+        instance.save_log(traceback.format_exc())
+        raise e
 
