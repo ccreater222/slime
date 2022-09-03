@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 import traceback
 from celery.result import AsyncResult
 from util.client import celery_app
@@ -39,5 +40,7 @@ def workflow(taskid: str,stageinfo: dict, filter: dict) -> AsyncResult:
     db_taskstruct.delete_one({"taskid": taskid})
     db_task.update_one({"taskid": taskid}, {"$set": {"status": "success"}})
 
-
+@celery_app.task
+def pluginrunner():
+    pass
 
