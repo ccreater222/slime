@@ -18,7 +18,7 @@ from util.logging import getlogger
 from .stage_model import *
 from util.util import get_all_keys, hex_objid
 from util.client import db_config, db_task
-from worker.task import pluginrunner
+
 
 STAGE_LIST = ["info_collect","topdomain_collect","subdomain_collect","ip_info","port_detect","service_detect","fingerprint_detect","poc_scan","final_step"]
 PLUGIN_LIST = {}
@@ -238,6 +238,7 @@ class BasePlugin:
 
             filter_instance = InputFilter(filter, inputtype,taskid)
             for model in filter_instance.filter():
+                from worker.task import pluginrunner
                 pluginrunner.delay(stage, instance._slime_name, model, taskid)
             # run
             result = getattr(instance,stage)(filter_instance.filter())

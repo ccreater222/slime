@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 from .plugin import load_plugins
 load_plugins()
 from flask import Blueprint
