@@ -27,6 +27,7 @@ celery_app = Celery(
     task_cls = SlimeTask
 )
 celery_app.config_from_object("config.celery")
+
 @setup_logging.connect
 def config_loggers(*args, **kwags):
     pass

@@ -16,7 +16,7 @@ class XrayPlugin(BasePlugin):
     stagelist = ['poc_scan','final_step']
     def poc_scan(self, target_list: List[ServiceDetectModel]) -> List[PocScanModel]:
         basedir = os.path.join(os.path.dirname(__file__), "resource")
-        tmpdir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.taskid)
+        tmpdir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.celery_task_id)
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         url_list = []
@@ -52,7 +52,7 @@ class XrayPlugin(BasePlugin):
         return result
     def final_step(self, target_list: List[BaseModel]) -> List[FinalStepModel]:
         basedir = os.path.join(os.path.dirname(__file__), "resource")
-        tmpdir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.taskid)
+        tmpdir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.celery_task_id)
         if not os.path.exists(tmpdir):
             os.makedirs(tmpdir)
         url_list = []

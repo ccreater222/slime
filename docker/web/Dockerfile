@@ -11,5 +11,5 @@ COPY ./docker/web/start.sh /start.sh
 COPY ./docker/web/nginx.conf /etc/nginx/sites-available/default 
 COPY ./docker/web/htpasswd /etc/apache2/htpasswd
 COPY ./frontend/dist /var/www/html
-
+RUN chmod 744 /etc/apache2/htpasswd
 CMD [ "/bin/bash", "/start.sh" ]

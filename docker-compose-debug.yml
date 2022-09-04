@@ -27,6 +27,13 @@ services:
       dockerfile: ./docker/web/Dockerfile
     restart: always
     # volumes:
+    #   - "./app/api:/app/api"
+    #   - "./app/config:/app/config"
+    #   - "./app/plugins:/app/plugins"
+    #   - "./app/test:/app/test"
+    #   - "./app/util:/app/util"
+    #   - "./app/worker:/app/worker"
+    # volumes:
     #   - ./app:/app
     #   - ./frontend/dist:/var/www/html
     ports:
@@ -46,3 +53,6 @@ services:
     ports:
       - "127.0.0.1:5678:5678"
     command: ["bash", "-c", "./venv/bin/pip install debugpy && ./venv/bin/python -m debugpy --listen 0.0.0.0:5678 ./app.py worker"]
+    environment:
+      - LOGLEVEL=DEBUG
+      - CELERY_QUEUE=pluginrunner,workflow

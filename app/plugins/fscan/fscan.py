@@ -46,7 +46,7 @@ class FscanPlugin(BasePlugin):
     
     def poc_scan(self, target_list: List[ServiceDetectModel]) -> List[PocScanModel]:
         poc_model = []
-        temp_dir = os.path.join(os.path.dirname(__file__),'resource','tmp',self.taskid)
+        temp_dir = os.path.join(os.path.dirname(__file__),'resource','tmp',self.celery_task_id)
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)
         ipfile = 'ip.txt'
@@ -106,7 +106,7 @@ class FscanPlugin(BasePlugin):
         return self.poc_scan(target_list)
     def port_detect(self, target_list: List[IpInfoModel]) -> List[PortDetectModel]:
         port_model = []
-        temp_dir = os.path.join(os.path.dirname(__file__),'resource','tmp',self.taskid)
+        temp_dir = os.path.join(os.path.dirname(__file__),'resource','tmp',self.celery_task_id)
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)
         ipfile = 'ip.txt'

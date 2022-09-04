@@ -19,7 +19,7 @@ logger = getlogger()
 class NucleiPlugin(BasePlugin):
     stagelist = ['fingerprint_detect', 'poc_scan']
     def parse(self) -> dict:
-        basedir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.taskid)
+        basedir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.celery_task_id)
         with open(os.path.join(basedir, "result.json"), "r") as f:
             data = f.read()
         data = re.sub(r"\}\s*\{","},{", data)
@@ -36,7 +36,7 @@ class NucleiPlugin(BasePlugin):
 
 
     def fingerprint_detect(self, target_list: List[ServiceDetectModel]) -> List[FingerprintDetectModel]:
-        basedir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.taskid)
+        basedir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.celery_task_id)
         if not os.path.exists(basedir):
             os.makedirs(basedir)
         
@@ -81,7 +81,7 @@ class NucleiPlugin(BasePlugin):
         shutil.rmtree(basedir)
         return result
     def poc_scan(self, target_list: List[ServiceDetectModel]) -> List[PocScanModel]:
-        basedir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.taskid)
+        basedir = os.path.join(os.path.dirname(__file__), "resource", "tmp", self.celery_task_id)
         if not os.path.exists(basedir):
             os.makedirs(basedir)
         

@@ -11,6 +11,7 @@ from util.util import dotset, get_all_keys
 from util.client import db_resource,db_vuldata
 from dateutil import parser as dateparser
 from urllib3.exceptions import InsecureRequestWarning
+from inspect import getmembers,ismethod,isfunction
 
 # Suppress only the single warning from urllib3 needed.
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
@@ -25,7 +26,7 @@ class BaseModel:
     def __init__(self, *args, **kwargs) -> None:
         all_annotations = FinalStepModel.get_all_annotations()
         for k,v in kwargs.items():
-            self.__annotations__[k] = all_annotations[k]
+            self.__annotations__[k] = all_annotations.get(k)
             setattr(self, k, v)
     def save(self):
         if not hasattr(self,'created'):
@@ -72,8 +73,31 @@ class BaseModel:
         
     @classmethod
     def load_from_db(cls, record):
+        _id = record.get("_id")
+        if _id != None and type(_id) == str:
+            record["_id"] = ObjectId(_id)
+        for key in ["created", "updated"]:
+            if record[key] != None and type(key) != datetime:
+                record[key] = datetime.fromtimestamp(record[key])
         instance = cls(**record)
+        return instance
     
+    def store_in_dict(self):
+        result = {}
+        for key, _ in getmembers(self,lambda x: not ismethod(x) and not isfunction(x)):
+            if key.startswith("_"):
+                if key != "_id":
+                    continue
+            data = getattr(self, key)
+            if key == "_id":
+                data = str(getattr(self,key))
+            
+            if type(data) == datetime:
+                data = data.timestamp()
+            result[key] = data
+        return result
+
+
     def get_all_keys(self):
         return get_all_keys(self)
     

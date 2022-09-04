@@ -19,7 +19,6 @@ from .stage_model import *
 from util.util import get_all_keys, hex_objid
 from util.client import db_config, db_task
 
-
 STAGE_LIST = ["info_collect","topdomain_collect","subdomain_collect","ip_info","port_detect","service_detect","fingerprint_detect","poc_scan","final_step"]
 PLUGIN_LIST = {}
 logger = getlogger(__name__)
@@ -233,20 +232,27 @@ class BasePlugin:
             func_annotations = getattr(func, '__annotations__', None)
             if func_annotations == None:
                 raise Exception('what happend?')
-            print(func.__dict__)
             inputtype = func_annotations['target_list'].__args__[0]
 
             filter_instance = InputFilter(filter, inputtype,taskid)
+            tasks = []
+            from worker.task import pluginrunner
             for model in filter_instance.filter():
-                from worker.task import pluginrunner
-                pluginrunner.delay(stage, instance._slime_name, model, taskid)
-            # run
-            result = getattr(instance,stage)(filter_instance.filter())
+                
+                tasks.append(pluginrunner.delay(stage, instance._slime_name, model.store_in_dict(), taskid))
+                logger.debug(f"execute {taskid} {stage} {instance._slime_name} ")
+            for task in tasks:
+                # wait all subtask end
+                logger.debug(f"get {taskid} {stage} {instance._slime_name} ")
+                task.get(disable_sync_subtasks=False)
             
-            # save result
-            for item in result:
-                item.taskid = taskid
-                item.save()
+            # # run
+            # result = getattr(instance,stage)(filter_instance.filter())
+            
+            # # save result
+            # for item in result:
+            #     item.taskid = taskid
+            #     item.save()
         except Exception as e:
             instance.save_log(traceback.format_exc())
             raise e

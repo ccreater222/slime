@@ -40,18 +40,30 @@ def workflow(taskid: str,stageinfo: dict, filter: dict) -> AsyncResult:
     db_taskstruct.delete_one({"taskid": taskid})
     db_task.update_one({"taskid": taskid}, {"$set": {"status": "success"}})
 
-@celery_app.task
-def pluginrunner(stage:str, plugin:str, data: BaseModel, taskid: str):
+@celery_app.task(bind=True)
+def pluginrunner(self, stage:str, plugin:str, data: dict, taskid: str):
+    
     cls = PLUGIN_LIST[plugin]['plugin']
     instance = cls()
     try:
         # init instance
         instance.taskid = taskid
+        instance.celery_task_id = self.request.id
         # load config
         config = cls._slime_config()
         config.load_from_database(stage, taskid)
         instance.config = config
         instance.stage = stage
+
+        # get model from stage function param
+        func = getattr(BasePlugin, stage, None)
+        if func == None:
+            raise NotImplementedError(f"{stage} has not been implemented")
+        func_annotations = getattr(func, '__annotations__', None)
+        if func_annotations == None:
+            raise Exception('what happend?')
+        inputtype = func_annotations['target_list'].__args__[0]
+        data = inputtype.load_from_db(data)
 
         # run
         result = getattr(instance,stage)([data])

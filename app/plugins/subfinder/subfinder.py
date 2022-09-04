@@ -18,7 +18,7 @@ class SubfinderPlugin(BasePlugin):
     def subdomain_collect(self, target_list: List[TopdomainCollectModel]) -> List[SubdomainCollectModel]:
         options = self.config.apply_config()
         basedir = os.path.join(os.path.dirname(__file__), "resource")
-        tmpdir = os.path.join(basedir, "tmp", self.taskid)
+        tmpdir = os.path.join(basedir, "tmp", self.celery_task_id)
         target_domain_file = os.path.join(tmpdir, "target.txt")
         result_path = os.path.join(tmpdir, "result.json")
         if not os.path.exists(tmpdir):

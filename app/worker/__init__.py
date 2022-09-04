@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 from flask import Blueprint
 from click import command
 from .cli import run_worker
