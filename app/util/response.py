@@ -1,4 +1,5 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: UTF-8 -*-
+
 
 from argparse import ArgumentError
 from typing import Any

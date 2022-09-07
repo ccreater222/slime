@@ -39,7 +39,7 @@ def task_query():
     total, tasks = Task.load_by_page(form)
     
     for task in tasks:
-        task_dict = task.toDict()
+        task_dict = task.toResponseDict()
         configs = {}
         for stage in task_dict.get('stageinfo', {}).keys():
             configs[stage] = []

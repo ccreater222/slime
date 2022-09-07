@@ -117,6 +117,13 @@ class Task:
             result[key] = getattr(self, key)
         return result
     
+    def toResponseDict(self) -> dict:
+        result = self.toDict()
+        for stagename in result.get("log", {}).keys():
+            for plugin in result.get("log").get(stagename, {}).keys():
+                result["log"][stagename][plugin] = result["log"][stagename][plugin][-25:]
+        return result
+
     def start(self):
         if db_taskstruct.count_documents({"taskid": self.taskid}) == 1:
             process = db_taskstruct.find_one({"taskid": self.taskid})
