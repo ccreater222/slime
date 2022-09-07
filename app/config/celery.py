@@ -18,7 +18,7 @@ broker_connection_timeout = 7200
 worker_hijack_root_logger = False
 worker_concurrency = os.cpu_count() * 2
 broker_heartbeat = 0
-# worker_cancel_long_running_tasks_on_connection_loss = False
+worker_cancel_long_running_tasks_on_connection_loss = False
 task_routes = {
     'worker.task.workflow': 'workflow',
     'worker.task.pluginrunner': 'pluginrunner'
