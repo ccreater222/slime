@@ -6,7 +6,7 @@ services:
     # ports:
     #   - 127.0.0.1:5672:5672
     volumes:
-      - "./docker/rabbitmq/advanced.config:/etc/rabbitmq/conf.d/advanced.config"
+      - "./docker/rabbitmq/advanced.config:/etc/rabbitmq/advanced.config"
   redis:
     image: redis
     restart: always

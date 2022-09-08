@@ -66,8 +66,6 @@ items:
           volumeMounts:
           - mountPath: /etc/rabbitmq
             name: config-volume
-          # - mountPath: /var/lib/rabbitmq/mnesia
-          #   name: rabbitmq-data-pvc
         restartPolicy: Always
         schedulerName: default-scheduler
         securityContext: {}
@@ -80,8 +78,8 @@ items:
               path: rabbitmq.conf
             - key: enabled_plugins
               path: enabled_plugins
-            - key: advanced.config
-              path: conf.d/advanced.config
+            - key: rabbitmq.conf
+              path: rabbitmq.conf
             name: rabbitmq-config
           name: config-volume
         # - name: rabbitmq-data-pvc
