@@ -4,6 +4,8 @@ items:
   data:
     enabled_plugins: |
             [rabbitmq_management,rabbitmq_peer_discovery_k8s].
+    advanced.config: |
+      [ {rabbit, [ {consumer_timeout, undefined} ]} ].
     rabbitmq.conf: |
       queue_master_locator=min-masters
       loopback_users.guest = false
@@ -78,6 +80,8 @@ items:
               path: rabbitmq.conf
             - key: enabled_plugins
               path: enabled_plugins
+            - key: advanced.config
+              path: conf.d/advanced.config
             name: rabbitmq-config
           name: config-volume
         # - name: rabbitmq-data-pvc

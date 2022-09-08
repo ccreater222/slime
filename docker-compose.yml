@@ -3,6 +3,8 @@ services:
   rabbitmq:
     image: rabbitmq
     restart: always
+    volumes:
+      - "./docker/rabbitmq/advanced.config:/etc/rabbitmq/conf.d/advanced.config"
     # ports:
     #   - 127.0.0.1:5672:5672
   redis:
