@@ -29,8 +29,6 @@ def workflow(taskid: str,stageinfo: dict, filter: dict) -> AsyncResult:
         logger.debug(f"{stagename}:{' '.join(plugin_list)}")
         db_taskstruct.update_one({"taskid": taskid}, {"$set": {"stage": stagename}})
         for plugin in plugin_list:
-            if plugin == "skip":
-                continue
             db_taskstruct.update_one({"taskid": taskid}, {"$set": {"plugin": plugin}})
             try:
                 PLUGIN_LIST[plugin]['plugin'].dispatch(stagename, filter, taskid)

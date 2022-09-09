@@ -1,6 +1,7 @@
-# -*- coding: UTF-8 -*-
-from inspect import getmembers,ismethod,isfunction
+# -*- coding: UTF-8 -*-
 
+from inspect import getmembers,ismethod,isfunction
+import socket
 from bson import ObjectId
 def get_all_keys(cls):
     all_keys = []
@@ -28,3 +29,20 @@ def objid_hex(objid: ObjectId):
 
 def hex_objid(s: str):
     return ObjectId(s)
+
+
+def get_ipv4_by_hostname(hostname):
+    # see `man getent` `/ hosts `
+    # see `man getaddrinfo`
+
+    return list(set(list(
+        i        # raw socket structure
+            [4]  # internet protocol info
+            [0]  # address
+        for i in 
+        socket.getaddrinfo(
+            hostname,
+            0  # port, required
+        )
+    )))
+
