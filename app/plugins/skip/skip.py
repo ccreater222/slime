@@ -71,6 +71,7 @@ class SkipPlugin(BasePlugin):
         for item in target_list:
             condition = item.toDict()
             condition["service"] = {"$exists": True}
+            condition["info"] = {"$exists": True}
             data = db_resource.find_one(condition)
             if data != None:
                 continue
