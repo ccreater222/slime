@@ -2,22 +2,25 @@
 
 from plugins.fscan.config import FscanConfig
 from plugins.fscan.fscan import FscanPlugin
-from util.plugin import BasePlugin, PluginConfig, load_plugins,PLUGIN_LIST
+from util.plugin import PluginConfig, load_plugins
 from util.stage_model import InfoCollectModel
 from util.client import db_config
 import pytest
 
+
 def test_load_plugins():
     load_plugins()
 
+
 def test_plugin_config():
-    instance = FscanConfig()
+    _ = FscanConfig()
 
 @pytest.mark.skip(reason="waste too much time")
 def test_base_plugin():
     plugin = FscanPlugin()
     assert plugin.getmodel('info_collect') == InfoCollectModel
-    plugin.dispatch('port_detect',{},"")
+    plugin.dispatch('port_detect', {}, "")
+
 
 def test_config_load():
     config = PluginConfig()
@@ -25,7 +28,7 @@ def test_config_load():
     config.a = 'b'
     config.c = 'cccc'
     config.save_to_database('global', 'global')
-    
+
     config.a = 'c'
     config.b = 'e'
     config.save_to_database('test', 'test')

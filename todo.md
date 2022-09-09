@@ -13,7 +13,7 @@
 ## 工具
 
 - [ ] Hackone
-- [ ] subfinder
+- [x] subfinder
 - [ ] fofa
 - [ ] shodan
 - [ ] hunter
@@ -29,4 +29,4 @@
 
 ## bugfix
 - [x] oneforall会在每一个域名跑完之后根据output生成文件导致，output指定的并不是总的域名结果
-- [ ] IPInfo阶段缺少插件导致属性丢下接下来的阶段无法运行
+- [x] IPInfo阶段缺少插件导致属性丢下接下来的阶段无法运行

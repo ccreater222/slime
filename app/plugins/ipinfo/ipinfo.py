@@ -6,7 +6,7 @@ from util.stage_model import *
 from util.client import db_resource
 from util.util import get_ipv4_by_hostname
 class IPInfoPlugin(BasePlugin):
-    stagelist = ['info_collect', 'topdomain_collect', 'subdomain_collect', 'ip_info', 'port_detect','service_detect', 'fingerprint_detect','poc_scan','final_step']
+    stagelist = ['ip_info']
     def ip_info(self, target_list: List[SubdomainCollectModel]) -> List[IpInfoModel]:
         result = []
         for item in target_list:
